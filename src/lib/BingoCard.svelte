@@ -34,12 +34,12 @@
 		// Check for bingo
 		if (bingo) {
 			// Change background color to red
-			document.body.style.backgroundColor = 'red';
+			//document.body.style.backgroundColor = 'red';
 		} else {
 			// Reset winning state if not bingo anymore (optional)
 			state.forEach((row) => row.forEach((cell) => (cell.winning = false)));
 
-			document.body.style.backgroundColor = 'black';
+			//document.body.style.backgroundColor = 'gray';
 		}
 	}
 
@@ -73,16 +73,19 @@
 	}
 </script>
 
-<div class="grid h-screen grid-cols-5 content-around justify-items-center gap-2">
-	{#each Array(5) as _, i}
+<div class="flex justify-center items-center h-screen w-screen">
+	<div class="aspect-square grid grid-cols-5 gap-2 max-w-screen max-h-screen p-10">
+	  {#each Array(5) as _, i}
 		{#each Array(5) as _, j}
-			<BingoCardButton
-				label={i === 2 && j === 2 ? "Free Space" : state[i][j].label}
-				onclick={() => handleButtonClick(i, j)}
-				selected={state[i][j].winning ? false : state[i][j].selected}
-				winning={state[i][j].winning}
-				font={i === 2 && j === 2 ? "Satan" : ''}
-			/>
+		  <BingoCardButton
+			label={i === 2 && j === 2 ? "Free Space" : state[i][j].label}
+			onclick={() => handleButtonClick(i, j)}
+			selected={state[i][j].winning ? false : state[i][j].selected}
+			winning={state[i][j].winning}
+			font={i === 2 && j === 2 ? "Satan" : ''}
+		  />
 		{/each}
-	{/each}
-</div>
+	  {/each}
+	</div>
+  </div>
+  

@@ -10,15 +10,17 @@
 </script>
 
 <button
-	font-family={font}
-	class="size-32 rounded font-bold text-white"
-	class:bg-red-700={selected}
-	class:hover:bg-red-500={selected}
-	class:bg-cyan-500={!selected}
-	class:hover:bg-cyan-300={!selected}
-	class:bg-green-500={winning}
-	class:hover:bg-green-300={winning}
-	{onclick}
+  font-family={font}
+  class="w-full h-full aspect-square text-slate-300 border border-slate-500 shadow-lg"
+  class:bg-red-950={selected}
+  class:hover:bg-red-900={selected}
+  class:bg-cyan-950={!selected}
+  class:hover:bg-cyan-900={!selected}
+  class:bg-green-950={winning}
+  class:hover:bg-green-900={winning}
+  {onclick}
 >
-	{label}
+  <div class="text-center">
+    {label}
+  </div>
 </button>
