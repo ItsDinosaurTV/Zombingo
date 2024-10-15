@@ -1,8 +1,11 @@
+
+
 <script lang="ts">
 	import BingoCardButton from './BingoCardButton.svelte';
 	import labels from './cards/demo';
 
-	const randomizedLabels = labels.toSorted(() => Math.random() - 0.5);
+	//const randomizedLabels = labels.toSorted(() => Math.random() - 0.5);
+	const randomizedLabels = labels.sort(() => Math.random() - 0.5);
 
 	const size = 5;
 	const state = Array.from({ length: size }, (_, i) =>
@@ -12,37 +15,26 @@
 			winning: false
 		}))
 	);
-	state[2][2].label = 'Free play';
+	//state[2][2].label = 'Free Space';
 
 	function handleButtonClick(i: number, j: number) {
 		state[i][j].selected = !state[i][j].selected;
 
+		if (!state[i][j].selected)
+			state[i][j].winning = false;
+
+		const { bingo, winningLines } = checkBingo();
+
+		for (const cell of state) {
+			for (const element of cell) {
+				element.winning = winningLines.some((line) => line.cells.includes(element));
+			}
+		}
+
 		// Check for bingo
-		if (checkBingo()) {
+		if (bingo) {
 			// Change background color to red
 			document.body.style.backgroundColor = 'red';
-
-			// Mark winning tiles white
-			for (let i = 0; i < size; i++) {
-				if (state[i].every((cell) => cell.selected)) {
-					state[i].forEach((cell) => (cell.winning = true)); // Set all cells in winning row to winning
-				}
-				if (state.every((row) => row[i].selected)) {
-					state.forEach((row) => (row[i].winning = true)); // Set all cells in winning column to winning
-				}
-			}
-
-			// Check diagonals
-			if (state.every((row, i) => row[i].selected)) {
-				for (let i = 0; i < size; i++) {
-					state[i][i].winning = true; // Set all cells in winning diagonal (top-left to bottom-right) to winning
-				}
-			}
-			if (state.every((row, i) => row[size - 1 - i].selected)) {
-				for (let i = 0; i < size; i++) {
-					state[i][size - 1 - i].winning = true; // Set all cells in winning diagonal (top-right to bottom-left) to winning
-				}
-			}
 		} else {
 			// Reset winning state if not bingo anymore (optional)
 			state.forEach((row) => row.forEach((cell) => (cell.winning = false)));
@@ -52,17 +44,32 @@
 	}
 
 	function checkBingo() {
+		let bingo = false;
+		let winningLines = [];
+
 		// Check rows, columns, and diagonals
 		for (let i = 0; i < size; i++) {
-			if (state[i].every((cell) => cell.selected)) return true; // Row bingo
-			if (state.every((row) => row[i].selected)) return true; // Column bingo
+			if (state[i].every((cell) => cell.selected)) {
+				winningLines.push({ type: "row", direction: "horizontal", cells: state[i] });
+				bingo = true;
+			}
+			if (state.every((row) => row[i].selected)) {
+				winningLines.push({ type: "column", direction: "vertical", cells: state.map((row) => row[i]) });
+				bingo = true;
+			}
 		}
 
 		// Check diagonals
-		if (state.every((row, i) => row[i].selected)) return true; // Diagonal from top-left to bottom-right
-		if (state.every((row, i) => row[size - 1 - i].selected)) return true; // Diagonal from top-right to bottom-left
+		if (state.every((row, i) => row[i].selected)) {
+			winningLines.push({ type: "diagonal", direction: "top-left-to-bottom-right", cells: state.map((row, i) => row[i]) });
+			bingo = true;
+		}
+		if (state.every((row, i) => row[size - 1 - i].selected)) {
+			winningLines.push({ type: "diagonal", direction: "top-right-to-bottom-left", cells: state.map((row, i) => row[size - 1 - i]) });
+			bingo = true;
+		}
 
-		return false;
+		return { bingo, winningLines };
 	}
 </script>
 
@@ -70,10 +77,11 @@
 	{#each Array(5) as _, i}
 		{#each Array(5) as _, j}
 			<BingoCardButton
-				label={state[i][j].label}
+				label={i === 2 && j === 2 ? "Free Space" : state[i][j].label}
 				onclick={() => handleButtonClick(i, j)}
-				selected={state[i][j].selected}
+				selected={state[i][j].winning ? false : state[i][j].selected}
 				winning={state[i][j].winning}
+				font={i === 2 && j === 2 ? "Satan" : ''}
 			/>
 		{/each}
 	{/each}

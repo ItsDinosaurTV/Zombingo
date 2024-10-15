@@ -1,8 +1,16 @@
+<style>
+	@font-face {
+	  font-family: 'Satan';
+	  src: url('/fonts/satan.ttf') format('truetype');
+	}
+</style>
+
 <script>
-	const { label, onclick, selected, winning } = $props();
+	const { label, onclick, selected, winning, font } = $props();
 </script>
 
 <button
+	font-family={font}
 	class="size-32 rounded font-bold text-white"
 	class:bg-red-700={selected}
 	class:hover:bg-red-500={selected}
