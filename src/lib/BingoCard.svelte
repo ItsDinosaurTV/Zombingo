@@ -1,6 +1,7 @@
 <script lang="ts">
 	import BingoCardButton from './BingoCardButton.svelte';
 	import labels from './cards/demo';
+	import { launchConfetti } from './ConfettiLauncher.svelte';
 
 	//const randomizedLabels = labels.toSorted(() => Math.random() - 0.5);
 	const randomizedLabels = labels.slice(1).sort(() => Math.random() - 0.5); // random labels excluding the 1st element
@@ -33,6 +34,8 @@
 		if (bingo) {
 			// Change background color to red
 			//document.body.style.backgroundColor = 'red';
+
+			launchConfetti(['🎃','☠️','🍫','🍬','🍭']);
 		} else {
 			// Reset winning state if not bingo anymore (optional)
 			state.forEach((row) => row.forEach((cell) => (cell.winning = false)));
