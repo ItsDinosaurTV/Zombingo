@@ -1,11 +1,10 @@
-
-
 <script lang="ts">
 	import BingoCardButton from './BingoCardButton.svelte';
 	import labels from './cards/demo';
 
 	//const randomizedLabels = labels.toSorted(() => Math.random() - 0.5);
-	const randomizedLabels = labels.sort(() => Math.random() - 0.5);
+	const randomizedLabels = labels.slice(1).sort(() => Math.random() - 0.5); // random labels excluding the 1st element
+	randomizedLabels.splice(12, 0, labels[0]); // add 1st element to middle
 
 	const size = 5;
 	const state = Array.from({ length: size }, (_, i) =>
@@ -15,7 +14,6 @@
 			winning: false
 		}))
 	);
-	//state[2][2].label = 'Free Space';
 
 	function handleButtonClick(i: number, j: number) {
 		state[i][j].selected = !state[i][j].selected;
@@ -75,24 +73,25 @@
 
 <div class="flex flex-col justify-center items-center h-screen w-screen">
 
-<div class="text-center text-orange-500 text-2xl font-zombie">
-	ZOMBINGO
-</div>
-
-<div class="flex-grow w-full flex justify-center items-center p-2">
-    <div class="grid grid-cols-5 gap-1 w-full h-full">
-	  {#each Array(5) as _, i}
-		{#each Array(5) as _, j}
-		  <BingoCardButton
-			label={i === 2 && j === 2 ? "FREE SPACE" : state[i][j].label}
-			onclick={() => handleButtonClick(i, j)}
-			selected={state[i][j].winning ? false : state[i][j].selected}
-			winning={state[i][j].winning}
-			font={i === 2 && j === 2 ? 'font-zombie text-orange-500' : 'font-vhs text-xs'}
-		  />
-		{/each}
-	  {/each}
+	<div class="text-center text-orange-500 text-2xl font-zombie">
+		ZOMBINGO
 	</div>
-</div>
+
+	<div class="flex-grow w-full flex justify-center items-center p-2">
+		<div class="grid grid-cols-5 gap-1 w-full h-full">
+		{#each Array(5) as _, i}
+			{#each Array(5) as _, j}
+			<BingoCardButton
+				label={state[i][j].label}
+				onclick={() => handleButtonClick(i, j)}
+				selected={state[i][j].winning ? false : state[i][j].selected}
+				winning={state[i][j].winning}
+				font={i === 2 && j === 2 ? 'font-zombie text-orange-500 uppercase' : 'font-vhs text-xs'}
+			/>
+			{/each}
+		{/each}
+		</div>
+	</div>
+
 </div>
   

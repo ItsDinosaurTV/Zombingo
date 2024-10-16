@@ -1,4 +1,5 @@
 export default [
+	'Free Space',
 	'Black cat crosses your path',
 	'Broken mirror',
 	'Walking under a ladder',
