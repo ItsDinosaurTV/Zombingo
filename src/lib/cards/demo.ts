@@ -16,12 +16,12 @@ export default [
 	'Weird coincidence',
 	'Phantom phone call',
 	'Stranger knocks on the door',
-	'Unlucky number sighting (13, 666)',
+	'Unlucky number sighting',
 	'Random power outage',
 	'Flashing lights',
 	'Urban legend discussion',
 	'Creepy doll',
 	'Sudden cold breeze',
 	'Finding a mysterious note',
-	'Someone mentions "It\'s Friday the 13th!"'
+	'Someone mentions "Friday the 13th!"'
 ];

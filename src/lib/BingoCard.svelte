@@ -73,8 +73,14 @@
 	}
 </script>
 
-<div class="flex justify-center items-center h-screen w-screen">
-	<div class="aspect-square grid grid-cols-5 gap-2 max-w-screen max-h-screen p-10">
+<div class="flex flex-col justify-center items-center h-screen w-screen">
+
+<div class="text-center text-fuchsia-700 text-lg">
+	BINGO
+</div>
+
+<div class="flex-grow w-full flex justify-center items-center p-2">
+    <div class="grid grid-cols-5 gap-1 w-full h-full">
 	  {#each Array(5) as _, i}
 		{#each Array(5) as _, j}
 		  <BingoCardButton
@@ -87,5 +93,6 @@
 		{/each}
 	  {/each}
 	</div>
-  </div>
+</div>
+</div>
   
