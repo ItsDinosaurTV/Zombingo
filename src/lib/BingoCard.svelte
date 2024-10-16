@@ -75,8 +75,8 @@
 
 <div class="flex flex-col justify-center items-center h-screen w-screen">
 
-<div class="text-center text-fuchsia-700 text-lg">
-	BINGO
+<div class="text-center text-orange-500 text-2xl font-zombie">
+	ZOMBINGO
 </div>
 
 <div class="flex-grow w-full flex justify-center items-center p-2">
@@ -84,11 +84,11 @@
 	  {#each Array(5) as _, i}
 		{#each Array(5) as _, j}
 		  <BingoCardButton
-			label={i === 2 && j === 2 ? "Free Space" : state[i][j].label}
+			label={i === 2 && j === 2 ? "FREE SPACE" : state[i][j].label}
 			onclick={() => handleButtonClick(i, j)}
 			selected={state[i][j].winning ? false : state[i][j].selected}
 			winning={state[i][j].winning}
-			font={i === 2 && j === 2 ? "Satan" : ''}
+			font={i === 2 && j === 2 ? 'font-zombie text-orange-500' : 'font-vhs text-xs'}
 		  />
 		{/each}
 	  {/each}
