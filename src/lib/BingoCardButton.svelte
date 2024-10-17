@@ -45,7 +45,6 @@
 	></div>
 
 	<div
-		id="winDRLine"
 		class="absolute inset-0 {center
 			? 'bg-lime-950'
 			: 'bg-orange-950'} opacity-0 transition-opacity duration-500 ease-out"
