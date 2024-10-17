@@ -8,7 +8,7 @@
 
 	let engine;
 	let world;
-	let render;
+	let renderer;
 	let mouseConstraint;
 
 	function resizeCanvas() {
@@ -25,7 +25,7 @@
 		world = engine.world;
 
 		// Create renderer
-		render = Matter.Render.create({
+		renderer = Matter.Render.create({
 			element: objectElement,
 			engine: engine,
 			options: {
@@ -36,47 +36,37 @@
 			}
 		});
 
-		// Create an invisible wall
+		// Create walls
 		const wallOptions = {
-			friction: 0.5, // Set friction (higher value = more resistance)
-			frictionStatic: 0.7, // Optionally set static friction (for stationary objects)
-			frictionAir: 0, // You can also control how much air resistance applies
+			friction: 0.5,
+			frictionStatic: 0.7,
+			frictionAir: 0,
 			isStatic: true,
 			render: {
-				visible: false // Makes the wall invisible
+				visible: false
 			}
 		};
-		let wallTop = Matter.Bodies.rectangle(
-			window.innerWidth / 2,
-			0,
-			window.innerWidth,
-			20,
-			wallOptions
-		);
-		let wallBottom = Matter.Bodies.rectangle(
-			window.innerWidth / 2,
-			window.innerHeight,
-			window.innerWidth,
-			20,
-			wallOptions
-		);
-		let wallLeft = Matter.Bodies.rectangle(
-			0,
-			window.innerHeight / 2,
-			20,
-			window.innerHeight,
-			wallOptions
-		);
-		let wallRight = Matter.Bodies.rectangle(
-			window.innerWidth,
-			window.innerHeight / 2,
-			20,
-			window.innerHeight,
-			wallOptions
-		);
+		const walls = [
+			Matter.Bodies.rectangle(window.innerWidth / 2, 0, window.innerWidth, 20, wallOptions),
+			Matter.Bodies.rectangle(
+				window.innerWidth / 2,
+				window.innerHeight,
+				window.innerWidth,
+				20,
+				wallOptions
+			),
+			Matter.Bodies.rectangle(0, window.innerHeight / 2, 20, window.innerHeight, wallOptions),
+			Matter.Bodies.rectangle(
+				window.innerWidth,
+				window.innerHeight / 2,
+				20,
+				window.innerHeight,
+				wallOptions
+			)
+		];
 
-		// Add objects to the world
-		Matter.World.add(world, [wallTop, wallBottom, wallLeft, wallRight]);
+		// Add walls to the world
+		Matter.World.add(world, walls);
 
 		// Add mouse control
 		let mouse = Matter.Mouse.create(objectElement);
@@ -130,16 +120,10 @@
 		});
 
 		// Run the engine and renderer
-		Matter.Engine.run(engine);
-		Matter.Render.run(render);
-
-		// Start the engine update loop using requestAnimationFrame
-		const update = () => {
-			Matter.Engine.update(engine, 1000 / 60); // Update the engine at 60 FPS
-			requestAnimationFrame(update); // Continue the update loop
-		};
-
-		update(); // Start the loop
+		// Create and run the runner
+		const runner = Matter.Runner.create();
+		Matter.Runner.run(runner, engine);
+		Matter.Render.run(renderer);
 
 		// Resize canvas and bodies on window resize
 		window.addEventListener('resize', resizeCanvas);
