@@ -32,7 +32,7 @@
 >
 	<!-- Ripple effect container for selected state -->
 	<div
-		class="absolute rounded-full bg-orange-950 transition-transform duration-500 ease-in-out"
+		class="duration-250 absolute rounded-full bg-orange-950 transition-transform ease-out"
 		style="
       width: {rippleSize}px; 
       height: {rippleSize}px;
@@ -44,12 +44,12 @@
 
 	<!-- Ripple effect for winning state -->
 	<div
-		class="absolute inset-0 bg-orange-500 opacity-0 transition-opacity duration-500 ease-in-out"
+		class="absolute inset-0 bg-orange-500 opacity-0 transition-opacity duration-500 ease-out"
 		class:opacity-100={winning}
 	></div>
 
 	<!-- Label text -->
-	<div class="relative z-10 text-center text-white {font}">
+	<div class="relative z-10 text-center {font}">
 		{label}
 	</div>
 </button>
