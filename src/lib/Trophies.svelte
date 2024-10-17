@@ -142,48 +142,55 @@
 	}
 
 	export function spawnTrophy() {
-		const imageWidth = 15; // Set this to the width of your PNG
-		const imageHeight = 24; // Set this to the height of your PNG
+		const imageWidth = 20; // Set this to the width of your PNG
+		const imageHeight = 20; // Set this to the height of your PNG
+		// Randomly pick a trophy image from the list
 
-		// Generate a random x position between 0 and the window width minus the trophy's width
-		const x = randomInRange(0.25, 0.75) * window.innerWidth; // Adjust to keep the trophy fully visible
+		const trophyImages = ['trophy1', 'trophy2', 'trophy3', 'trophy4', 'trophy5'];
+		const randomIndex = Math.floor(Math.random() * trophyImages.length);
+		const chosenImage = trophyImages[randomIndex]; // Generate a random x position between 0 and the window width minus the trophy's width
+
+		const x = randomInRange(0.25, 0.75) * window.innerWidth;
 		const y = 0.1 * window.innerHeight; // Start near the top of the screen
+		// Define trapezoid vertices
 
-		launchConfettiAtPosition(x / window.innerWidth, y / window.innerHeight);
+		const trapezoidVertices = [
+			{ x: -imageWidth * 2.5, y: -imageHeight * 2.5 }, // Bottom left
+			{ x: imageWidth * 2.5, y: -imageHeight * 2.5 }, // Bottom right
+			{ x: imageWidth * 1, y: imageHeight * 2.5 }, // Top right, narrower
+			{ x: -imageWidth * 1, y: imageHeight * 2.5 } // Top left, narrower
+		]; // Create a new trapezoid using a polygon shape
 
-		// Create a new box at the random x position with random rotation
-		const angle = Math.random() * Math.PI * 2; // Random angle in radians
-		let newBox = Matter.Bodies.rectangle(x, y, imageWidth * 5, imageHeight * 5, {
+		let newTrapezoid = Matter.Bodies.fromVertices(x, y, trapezoidVertices, {
 			render: {
 				sprite: {
-					texture: '/trophies/trophy.png',
-					xScale: 0.5,
-					yScale: 0.5,
+					texture: `/trophies/${chosenImage}.png`, // Use the chosen image name
+					xScale: 2,
+					yScale: 2,
 					textureFilter: 'nearest'
 				}
 			},
-			angle: angle // Set initial angle
-		});
+			angle: Math.random() * Math.PI * 2 // Random angle in radians
+		}); // Add the trapezoid to the world
 
-		// Add the box to the world and the array
-		Matter.World.add(world, newBox);
+		Matter.World.add(world, newTrapezoid); // Set a random angular velocity
 
-		// Set a random angular velocity
-		const angularVelocity = randomInRange(-0.1, 0.1); // Random value between -0.025 and 0.025
-		Matter.Body.setAngularVelocity(newBox, angularVelocity);
+		const angularVelocity = randomInRange(-0.1, 0.1);
+		Matter.Body.setAngularVelocity(newTrapezoid, angularVelocity); // Set a random initial downward velocity (adjust values for desired speed)
 
-		// Set a random initial downward velocity (adjust values for desired speed)
-		Matter.Body.setVelocity(newBox, { x: randomInRange(-10, 10), y: randomInRange(10, 15) }); // No horizontal velocity, only downward
+		Matter.Body.setVelocity(newTrapezoid, { x: randomInRange(-10, 10), y: randomInRange(10, 15) });
 
-		return newBox;
+		launchConfettiAtPosition(x / window.innerWidth, y / window.innerHeight);
+
+		return newTrapezoid;
 	}
 
 	export function destroyTrophy(rigidbody) {
 		const position = rigidbody.position;
 
-		launchConfettiAtPosition(position.x / window.innerWidth, position.y / window.innerHeight);
-
 		Matter.World.remove(world, rigidbody);
+
+		launchConfettiAtPosition(position.x / window.innerWidth, position.y / window.innerHeight);
 	}
 
 	function handleDeviceMotion(event) {

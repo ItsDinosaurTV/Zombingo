@@ -3,7 +3,7 @@
 	import BingoCardButton from './BingoCardButton.svelte';
 	import labels from './cards/demo';
 	import { launchConfetti } from './ConfettiLauncher.svelte';
-	import { initPhysics, spawnTrophy, destroyTrophy } from './Rigidbody.svelte'; // Adjust the path as necessary
+	import { initPhysics, spawnTrophy, destroyTrophy } from './Trophies.svelte'; // Adjust the path as necessary
 
 	//const randomizedLabels = labels.toSorted(() => Math.random() - 0.5);
 	const randomizedLabels = labels.slice(1).sort(() => Math.random() - 0.5); // random labels excluding the 1st element
@@ -33,6 +33,12 @@
 	onMount(() => {
 		initPhysics(objectElement);
 
+		window.addEventListener('keydown', (event) => {
+			if (event.code === 'KeyT') {
+				spawnTrophy();
+			}
+		});
+
 		// Initial setting of the height
 		updateViewportHeight();
 
@@ -42,14 +48,6 @@
 		return () => {
 			window.visualViewport.removeEventListener('resize', updateViewportHeight);
 		};
-
-		/*
-		window.addEventListener('keydown', (event) => {
-			if (event.code === 'KeyT') {
-				spawnTrophy();
-			}
-		});
-		*/
 	});
 
 	function handleButtonClick(i: number, j: number) {
@@ -160,7 +158,10 @@
 </script>
 
 <!-- Use the dynamic height for your main container -->
-<div class="relative" style="height: {viewportHeight};">
+<div
+	class="relative bg-gradient-to-t from-slate-950 to-neutral-950"
+	style="height: {viewportHeight};"
+>
 	<div bind:this={objectElement} class="absolute z-10 h-full w-full"></div>
 
 	<div class="flex h-full w-full flex-col items-center justify-center">
