@@ -1,5 +1,10 @@
 <script context="module">
 	import Matter from 'matter-js';
+	import { launchConfettiAtPosition } from './ConfettiLauncher.svelte';
+
+	function randomInRange(min, max) {
+		return Math.random() * (max - min) + min;
+	}
 
 	let engine;
 	let world;
@@ -112,6 +117,14 @@
 						clientY: mousePosition.y
 					});
 					underlyingElement.dispatchEvent(clickEvent);
+
+					/*
+					launchConfettiAtPosition(
+						mousePosition.x / window.innerWidth,
+						mousePosition.y / window.innerHeight
+					);
+          */
+				} else {
 				}
 			}
 		});
@@ -148,12 +161,14 @@
 		const imageWidth = 15; // Set this to the width of your PNG
 		const imageHeight = 24; // Set this to the height of your PNG
 
-		// Handle click to add new boxes
+		// Generate a random x position between 0 and the window width minus the trophy's width
+		const x = randomInRange(0.25, 0.75) * window.innerWidth; // Adjust to keep the trophy fully visible
+		const y = 0.1 * window.innerHeight; // Start near the top of the screen
 
-		const x = window.innerWidth / 2;
-		const y = 50; // Start near the top of the screen
+		launchConfettiAtPosition(x / window.innerWidth, y / window.innerHeight);
 
-		// Create a new box at the center top position
+		// Create a new box at the random x position with random rotation
+		const angle = Math.random() * Math.PI * 2; // Random angle in radians
 		let newBox = Matter.Bodies.rectangle(x, y, imageWidth * 5, imageHeight * 5, {
 			render: {
 				sprite: {
@@ -162,16 +177,28 @@
 					yScale: 0.5,
 					textureFilter: 'nearest'
 				}
-			}
+			},
+			angle: angle // Set initial angle
 		});
 
 		// Add the box to the world and the array
 		Matter.World.add(world, newBox);
 
+		// Set a random angular velocity
+		const angularVelocity = randomInRange(-0.1, 0.1); // Random value between -0.025 and 0.025
+		Matter.Body.setAngularVelocity(newBox, angularVelocity);
+
+		// Set a random initial downward velocity (adjust values for desired speed)
+		Matter.Body.setVelocity(newBox, { x: randomInRange(-10, 10), y: randomInRange(10, 15) }); // No horizontal velocity, only downward
+
 		return newBox;
 	}
 
 	export function destroyTrophy(rigidbody) {
+		const position = rigidbody.position;
+
+		launchConfettiAtPosition(position.x / window.innerWidth, position.y / window.innerHeight);
+
 		Matter.World.remove(world, rigidbody);
 	}
 
