@@ -50,7 +50,7 @@
 			// left
 			confetti({
 				...defaults,
-				particleCount: 30,
+				particleCount: 20,
 				decay: 0.92,
 				angle: 60,
 				origin: { x: 0, y: 1 }
@@ -65,7 +65,7 @@
 			});
 			confetti({
 				...defaults,
-				particleCount: 15,
+				particleCount: 5,
 				decay: 0.9,
 				scalar: scalar / 2,
 				shapes: ['circle'],
@@ -76,7 +76,7 @@
 			// right
 			confetti({
 				...defaults,
-				particleCount: 30,
+				particleCount: 20,
 				decay: 0.92,
 				angle: 120,
 				origin: { x: 1, y: 1 }
@@ -91,7 +91,7 @@
 			});
 			confetti({
 				...defaults,
-				particleCount: 15,
+				particleCount: 5,
 				decay: 0.9,
 				scalar: scalar / 2,
 				shapes: ['circle'],
@@ -102,7 +102,7 @@
 			// top
 			confetti({
 				...defaults,
-				particleCount: 30,
+				particleCount: 20,
 				decay: 0.92,
 				angle: 90,
 				origin: { y: -0.1 },
