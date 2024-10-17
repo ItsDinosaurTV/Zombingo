@@ -32,15 +32,15 @@
 >
 	<div
 		class="duration-250 absolute rounded-full {center
-			? 'bg-lime-950'
-			: 'bg-orange-950'} transition-transform ease-out"
+			? 'bg-radient-ellipse-c from-lime-950 from-60% to-lime-800 to-100%'
+			: 'bg-radient-ellipse-c from-orange-950 from-60% to-orange-800 to-100%'} transition-transform ease-out"
 		style="
       width: {rippleSize}px;
       height: {rippleSize}px;
       left: calc({clickX}% - {rippleSize / 2}px);
       top: calc({clickY}% - {rippleSize / 2}px);
       transform: scale({selected ? 1 : 0});
-      opacity: {selected ? 1 : 0}; /* Add opacity transition for fading out */
+      opacity: {selected ? 1 : 0}; 
     "
 	></div>
 

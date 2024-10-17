@@ -1,3 +1,5 @@
+const radialGradientPlugin = require('./plugins/radialGradientPlugin');
+
 /** @type {import('tailwindcss').Config} */
 export default {
 	content: ['./src/**/*.{html,js,svelte,ts}'],
@@ -6,9 +8,9 @@ export default {
 			fontFamily: {
 				satan: ['Satan', 'sans-serif'],
 				zombie: ['Zombie', 'sans-serif'],
-				vhs: ['VHS', 'sans-serif'],
+				vhs: ['VHS', 'sans-serif']
 			}
-		},
+		}
 	},
-	plugins: []
+	plugins: [radialGradientPlugin]
 };
