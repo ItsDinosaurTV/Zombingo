@@ -1,5 +1,5 @@
 <script>
-	const { label, onclick, selected, winning, center } = $props();
+	const { label, onclick, selected, winning, winningDirections, center } = $props();
 
 	// Variables to store the click position
 	let clickX = $state(50); // Click X in percentage
@@ -45,13 +45,46 @@
 	></div>
 
 	<div
+		id="winDRLine"
 		class="absolute inset-0 {center
 			? 'bg-lime-950'
 			: 'bg-orange-950'} opacity-0 transition-opacity duration-500 ease-out"
 		class:opacity-100={winning}
 	></div>
 
-	<div class="relative text-center">
+	<div
+		id="winHLine"
+		class="absolute inset-0 mix-blend-lighten {center
+			? 'bg-gradient-to-t from-lime-950 from-10% via-lime-900 via-50% to-lime-950 to-90%'
+			: 'bg-gradient-to-t from-orange-950 from-10% via-orange-900 via-50% to-orange-950 to-90%'} opacity-0 transition-opacity duration-500 ease-out"
+		class:opacity-100={winningDirections.includes('horizontal')}
+	></div>
+
+	<div
+		id="winVLine"
+		class="absolute inset-0 mix-blend-lighten {center
+			? 'bg-gradient-to-r from-lime-950 from-10% via-lime-900 via-50% to-lime-950 to-90%'
+			: 'bg-gradient-to-r from-orange-950 from-10% via-orange-900 via-50% to-orange-950 to-90%'} opacity-0 transition-opacity duration-500 ease-out"
+		class:opacity-100={winningDirections.includes('vertical')}
+	></div>
+
+	<div
+		id="winDRLine"
+		class="absolute inset-0 mix-blend-lighten {center
+			? 'bg-gradient-to-tr from-lime-950 from-10% via-lime-900 via-50% to-lime-950 to-90%'
+			: 'bg-gradient-to-tr from-orange-950 from-10% via-orange-900 via-50% to-orange-950 to-90%'} opacity-0 transition-opacity duration-500 ease-out"
+		class:opacity-100={winningDirections.includes('top-left-to-bottom-right')}
+	></div>
+
+	<div
+		id="winDLLine"
+		class="absolute inset-0 mix-blend-lighten {center
+			? 'bg-gradient-to-tl from-lime-950 from-10% via-lime-900 via-50% to-lime-950 to-90%'
+			: 'bg-gradient-to-tl from-orange-950 from-10% via-orange-900 via-50% to-orange-950 to-90%'} opacity-0 transition-opacity duration-500 ease-out"
+		class:opacity-100={winningDirections.includes('top-right-to-bottom-left')}
+	></div>
+
+	<div class="relative z-20 text-center">
 		<div
 			id="selected"
 			class={selected

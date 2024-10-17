@@ -3,9 +3,8 @@
 	import BingoCardButton from './BingoCardButton.svelte';
 	import labels from './cards/demo';
 	import { launchConfetti } from './ConfettiLauncher.svelte';
-	import { initPhysics, spawnTrophy, destroyTrophy } from './Trophies.svelte'; // Adjust the path as necessary
+	import { initPhysics, spawnTrophy, destroyTrophy } from './Trophies.svelte';
 
-	//const randomizedLabels = labels.toSorted(() => Math.random() - 0.5);
 	const randomizedLabels = labels.slice(1).sort(() => Math.random() - 0.5); // random labels excluding the 1st element
 	randomizedLabels.splice(12, 0, labels[0]); // add 1st element to middle
 
@@ -14,7 +13,8 @@
 		Array.from({ length: size }, (_, j) => ({
 			label: randomizedLabels[i * size + j],
 			selected: false,
-			winning: false
+			winning: false,
+			winningDirections: []
 		}))
 	);
 
@@ -22,8 +22,9 @@
 	let trophies = new Map(); // Stores trophies associated with each bingo line
 
 	let objectElement;
+	let svgLines = []; // Array to store line coordinates
 
-	let viewportHeight = '100vh'; // Default to 100vh
+	let viewportHeight = '100vh';
 
 	// Function to update height based on the visible viewport
 	function updateViewportHeight() {
@@ -32,12 +33,6 @@
 
 	onMount(() => {
 		initPhysics(objectElement);
-
-		window.addEventListener('keydown', (event) => {
-			if (event.code === 'KeyT') {
-				spawnTrophy();
-			}
-		});
 
 		// Initial setting of the height
 		updateViewportHeight();
@@ -84,11 +79,18 @@
 		for (const line of toAdd) {
 			for (const cell of line.cells) {
 				cell.winning = true; // Mark winning for valid cells
+
+				cell.winningDirections.push(line.direction);
 			}
+
 			// Launch confetti for every newly valid line
 			launchConfetti(['🎃', '☠️', '🍫', '🍬', '🍭']);
+
 			const trophy = spawnTrophy(); // Store the trophy reference
 			trophies.set(line.cells.map((cell) => cell.label).join(','), trophy); // Associate the trophy with the line
+
+			// Add line to SVG
+			addLine(line);
 		}
 
 		// Handle invalid lines: only remove winning status if they were previously valid
@@ -104,6 +106,10 @@
 				if (!winningCells.has(cell)) {
 					cell.winning = false; // Remove winning status for invalid cells
 				}
+
+				cell.winningDirections = cell.winningDirections.filter(
+					(direction) => direction !== line.direction
+				);
 			}
 
 			// Destroy the associated trophy for invalid lines
@@ -114,7 +120,47 @@
 				destroyTrophy(trophy);
 				trophies.delete(lineKey); // Remove the trophy reference from the map
 			}
+
+			// Remove line from SVG
+			removeLine(line);
 		}
+	}
+
+	// Function to calculate and add line positions to the svgLines array
+	function addLine(line) {
+		// Get the positions in the jagged array
+		const positions = line.cells.map((cell) => {
+			for (let i = 0; i < state.length; i++) {
+				const rowIndex = state[i].findIndex((c) => c === cell);
+				if (rowIndex !== -1) {
+					return { row: i, col: rowIndex };
+				}
+			}
+		});
+
+		if (positions.length > 0) {
+			const start = positions[0];
+			const end = positions[positions.length - 1];
+
+			const lineKey = line.cells.map((cell) => cell.label).join(',');
+
+			// Calculate the percentage positions within the grid
+			svgLines.push({
+				key: lineKey,
+				x1: (start.col + 0.5) * (100 / size),
+				y1: (start.row + 0.5) * (100 / size),
+				x2: (end.col + 0.5) * (100 / size),
+				y2: (end.row + 0.5) * (100 / size)
+			});
+
+			// trigger redraw
+			svgLines = svgLines;
+		}
+	}
+
+	function removeLine(line) {
+		const lineKey = line.cells.map((cell) => cell.label).join(',');
+		svgLines = svgLines.filter((l) => l.key !== lineKey);
 	}
 
 	// Function to check for valid bingo lines
@@ -144,6 +190,7 @@
 			});
 		}
 
+		// Return the winning lines
 		if (state.every((row, i) => row[size - 1 - i].selected)) {
 			winningLines.push({
 				type: 'diagonal',
@@ -157,12 +204,12 @@
 	}
 </script>
 
-<!-- Use the dynamic height for your main container -->
+<!-- Use the dynamic height for main container -->
 <div
 	class="relative bg-gradient-to-t from-slate-950 to-neutral-950"
 	style="height: {viewportHeight};"
 >
-	<div bind:this={objectElement} class="absolute z-10 h-full w-full"></div>
+	<div bind:this={objectElement} class="absolute z-30 h-full w-full"></div>
 
 	<div class="flex h-full w-full flex-col items-center justify-center">
 		<div class="mt-2 text-center font-zombie text-2xl text-orange-500">
@@ -178,11 +225,28 @@
 							onclick={() => handleButtonClick(i, j)}
 							selected={state[i][j].selected}
 							winning={state[i][j].winning}
+							winningDirections={state[i][j].winningDirections}
 							center={i === 2 && j === 2}
 						/>
 					{/each}
 				{/each}
 			</div>
+
+			<!-- SVG to draw lines -->
+			<!--
+			<svg class="pointer-events-none absolute inset-0 h-full w-full">
+				{#each svgLines as { x1, y1, x2, y2 }}
+					<line
+						x1={x1 + '%'}
+						y1={y1 + '%'}
+						x2={x2 + '%'}
+						y2={y2 + '%'}
+						stroke="black"
+						stroke-width="10"
+					/>
+				{/each}
+			</svg>
+			-->
 		</div>
 	</div>
 </div>
