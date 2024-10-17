@@ -3,7 +3,7 @@
 	import BingoCardButton from './BingoCardButton.svelte';
 	import labels from './cards/demo';
 	import { launchConfetti } from './ConfettiLauncher.svelte';
-	import { initPhysics, spawnTrophy } from './Rigidbody.svelte'; // Adjust the path as necessary
+	import { initPhysics, spawnTrophy, destroyTrophy } from './Rigidbody.svelte'; // Adjust the path as necessary
 
 	//const randomizedLabels = labels.toSorted(() => Math.random() - 0.5);
 	const randomizedLabels = labels.slice(1).sort(() => Math.random() - 0.5); // random labels excluding the 1st element
@@ -19,6 +19,7 @@
 	);
 
 	let winningBingos = []; // This will keep track of currently valid lines
+	let trophies = new Map(); // Stores trophies associated with each bingo line
 
 	let objectElement;
 
@@ -71,7 +72,8 @@
 			}
 			// Launch confetti for every newly valid line
 			launchConfetti(['🎃', '☠️', '🍫', '🍬', '🍭']);
-			spawnTrophy();
+			const trophy = spawnTrophy(); // Store the trophy reference
+			trophies.set(line.cells.map((cell) => cell.label).join(','), trophy); // Associate the trophy with the line
 		}
 
 		// Handle invalid lines: only remove winning status if they were previously valid
@@ -87,6 +89,15 @@
 				if (!winningCells.has(cell)) {
 					cell.winning = false; // Remove winning status for invalid cells
 				}
+			}
+
+			// Destroy the associated trophy for invalid lines
+			const lineKey = line.cells.map((cell) => cell.label).join(',');
+			const trophy = trophies.get(lineKey);
+
+			if (trophy) {
+				destroyTrophy(trophy);
+				trophies.delete(lineKey); // Remove the trophy reference from the map
 			}
 		}
 	}

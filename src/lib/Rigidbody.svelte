@@ -6,9 +6,6 @@
 	let render;
 	let mouseConstraint;
 
-	// Store all the boxes in an array
-	let boxes = [];
-
 	function resizeCanvas() {
 		Matter.Render.setPixelRatio(render, window.devicePixelRatio);
 		Matter.Render.lookAt(render, {
@@ -36,6 +33,9 @@
 
 		// Create an invisible wall
 		const wallOptions = {
+			friction: 0.5, // Set friction (higher value = more resistance)
+			frictionStatic: 0.7, // Optionally set static friction (for stationary objects)
+			frictionAir: 0, // You can also control how much air resistance applies
 			isStatic: true,
 			render: {
 				visible: false // Makes the wall invisible
@@ -88,6 +88,8 @@
 		Matter.Events.on(mouseConstraint, 'mousedown', function (event) {
 			// Get mouse coordinates
 			const mousePosition = event.mouse.position;
+
+			// get bodies clicked on
 			const clickedBodies = Matter.Query.point(world.bodies, mousePosition);
 
 			if (clickedBodies.length === 0) {
@@ -102,8 +104,6 @@
 
 				// Log or interact with the element below
 				if (underlyingElement) {
-					console.log('Clicked element below objectElement:', underlyingElement);
-					// Optionally, trigger a click event on the element below
 					const clickEvent = new MouseEvent('click', {
 						view: window,
 						bubbles: true,
@@ -166,8 +166,13 @@
 		});
 
 		// Add the box to the world and the array
-		boxes.push(newBox);
 		Matter.World.add(world, newBox);
+
+		return newBox;
+	}
+
+	export function destroyTrophy(rigidbody) {
+		Matter.World.remove(world, rigidbody);
 	}
 
 	function handleDeviceMotion(event) {
