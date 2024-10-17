@@ -2,15 +2,24 @@
 	const { label, onclick, selected, winning, font } = $props();
 
 	// Variables to store the click position
-	let clickX = $state('0%');
-	let clickY = $state('0%');
+	let clickX = $state(50); // Click X in percentage
+	let clickY = $state(50); // Click Y in percentage
+	let rippleSize = $state(0); // Will hold the size of the ripple
 
-	// Function to capture click position
 	function handleClick(event) {
-		// Calculate the click position relative to the button
 		const rect = event.currentTarget.getBoundingClientRect();
-		clickX = `${((event.clientX - rect.left) / rect.width) * 100}%`;
-		clickY = `${((event.clientY - rect.top) / rect.height) * 100}%`;
+
+		// Calculate click position relative to the button
+		clickX = ((event.clientX - rect.left) / rect.width) * 100;
+		clickY = ((event.clientY - rect.top) / rect.height) * 100;
+
+		// Calculate the distance to the farthest corner
+		const dx = Math.max(event.clientX - rect.left, rect.right - event.clientX);
+		const dy = Math.max(event.clientY - rect.top, rect.bottom - event.clientY);
+		const maxDistance = Math.sqrt(dx * dx + dy * dy);
+
+		// Set the size of the ripple based on the distance to the farthest corner
+		rippleSize = maxDistance * 2;
 
 		// Trigger the onclick function passed from parent
 		onclick();
@@ -23,10 +32,14 @@
 >
 	<!-- Ripple effect container for selected state -->
 	<div
-		class="absolute inset-0 bg-orange-950 transition-transform duration-500 ease-out"
-		class:scale-0={!selected}
-		class:scale-100={selected}
-		style="transform: translate(calc({clickX} - 50%), calc({clickY} - 50%)) scale(var(--scale));"
+		class="absolute rounded-full bg-orange-950 transition-transform duration-500 ease-in-out"
+		style="
+      width: {rippleSize}px; 
+      height: {rippleSize}px;
+      left: calc({clickX}% - {rippleSize / 2}px); 
+      top: calc({clickY}% - {rippleSize / 2}px);
+      transform: scale({selected ? 1 : 0});
+    "
 	></div>
 
 	<!-- Ripple effect for winning state -->
@@ -42,10 +55,4 @@
 </button>
 
 <style>
-	:global(.scale-0) {
-		--scale: 0; /* Ripple is not visible */
-	}
-	:global(.scale-100) {
-		--scale: 2; /* Adjust for the desired size of the ripple */
-	}
 </style>
