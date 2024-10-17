@@ -1,5 +1,5 @@
 <script>
-	const { label, onclick, selected, winning, font } = $props();
+	const { label, onclick, selected, winning, center } = $props();
 
 	// Variables to store the click position
 	let clickX = $state(50); // Click X in percentage
@@ -19,7 +19,7 @@
 		const maxDistance = Math.sqrt(dx * dx + dy * dy);
 
 		// Set the size of the ripple based on the distance to the farthest corner
-		rippleSize = maxDistance * 2;
+		rippleSize = maxDistance * 1;
 
 		// Trigger the onclick function passed from parent
 		onclick();
@@ -30,29 +30,52 @@
 	class="relative h-full w-full overflow-hidden border border-slate-500 shadow-lg"
 	onclick={handleClick}
 >
-	<!-- Ripple effect container for selected state -->
 	<div
-		class="duration-250 absolute rounded-full bg-orange-950 transition-transform ease-out"
+		class="duration-250 absolute rounded-full {center
+			? 'bg-lime-950'
+			: 'bg-orange-950'} transition-transform ease-out"
 		style="
-      width: {rippleSize}px; 
+      width: {rippleSize}px;
       height: {rippleSize}px;
-      left: calc({clickX}% - {rippleSize / 2}px); 
+      left: calc({clickX}% - {rippleSize / 2}px);
       top: calc({clickY}% - {rippleSize / 2}px);
       transform: scale({selected ? 1 : 0});
+      opacity: {selected ? 1 : 0}; /* Add opacity transition for fading out */
     "
 	></div>
 
-	<!-- Ripple effect for winning state -->
 	<div
-		class="absolute inset-0 bg-orange-500 opacity-0 transition-opacity duration-500 ease-out"
+		class="absolute inset-0 {center
+			? 'bg-lime-950'
+			: 'bg-orange-950'} opacity-0 transition-opacity duration-500 ease-out"
 		class:opacity-100={winning}
 	></div>
 
-	<!-- Label text -->
-	<div class="relative text-center {font}">
-		{label}
+	<div class="relative text-center">
+		<div
+			id="selected"
+			class={selected
+				? winning
+					? center
+						? 'font-zombie uppercase text-lime-500'
+						: 'font-vhs text-orange-500'
+					: center
+						? 'font-zombie uppercase text-lime-500'
+						: 'font-vhs text-orange-500'
+				: 'hidden'}
+		>
+			{label}
+		</div>
+
+		<div
+			id="notselected"
+			class={!selected
+				? center
+					? 'font-zombie uppercase text-orange-500'
+					: 'font-vhs text-slate-300'
+				: 'hidden'}
+		>
+			{label}
+		</div>
 	</div>
 </button>
-
-<style>
-</style>

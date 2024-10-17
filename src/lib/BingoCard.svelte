@@ -177,9 +177,7 @@
 							onclick={() => handleButtonClick(i, j)}
 							selected={state[i][j].selected}
 							winning={state[i][j].winning}
-							font={i === 2 && j === 2
-								? 'font-zombie uppercase text-orange-500'
-								: 'font-vhs text-slate-200'}
+							center={i === 2 && j === 2}
 						/>
 					{/each}
 				{/each}
