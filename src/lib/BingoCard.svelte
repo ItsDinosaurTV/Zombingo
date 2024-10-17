@@ -4,19 +4,18 @@
 	import labels from './cards/demo';
 	import { launchConfetti } from './ConfettiLauncher.svelte';
 	import { initPhysics, spawnTrophy, destroyTrophy } from './Rigidbody.svelte'; // Adjust the path as necessary
+	import { getStateFromSession, initializeState, saveStateToSession } from './utils/sessionState';
+	import type { GameState } from './types/gameState';
 
 	//const randomizedLabels = labels.toSorted(() => Math.random() - 0.5);
 	const randomizedLabels = labels.slice(1).sort(() => Math.random() - 0.5); // random labels excluding the 1st element
 	randomizedLabels.splice(12, 0, labels[0]); // add 1st element to middle
 
 	const size = 5;
-	const state = Array.from({ length: size }, (_, i) =>
-		Array.from({ length: size }, (_, j) => ({
-			label: randomizedLabels[i * size + j],
-			selected: false,
-			winning: false
-		}))
-	);
+	let state = $state<GameState>(getStateFromSession(size, randomizedLabels));
+
+	// Watch for state changes to save to sessionStorage
+	$effect(() => saveStateToSession(state));
 
 	let winningBingos = []; // This will keep track of currently valid lines
 	let trophies = new Map(); // Stores trophies associated with each bingo line
@@ -170,13 +169,13 @@
 
 		<div class="flex flex-grow items-center justify-center p-2">
 			<div class="grid h-full w-full grid-cols-5 gap-1">
-				{#each Array(5) as _, i}
-					{#each Array(5) as _, j}
+				{#each state as row, i}
+					{#each row as cell, j}
 						<BingoCardButton
-							label={state[i][j].label}
+							label={cell.label}
 							onclick={() => handleButtonClick(i, j)}
-							selected={state[i][j].selected}
-							winning={state[i][j].winning}
+							selected={cell.selected}
+							winning={cell.winning}
 							center={i === 2 && j === 2}
 						/>
 					{/each}
