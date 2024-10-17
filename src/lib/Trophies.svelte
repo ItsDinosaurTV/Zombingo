@@ -47,19 +47,19 @@
 			}
 		};
 		const walls = [
-			Matter.Bodies.rectangle(window.innerWidth / 2, 0, window.innerWidth, 20, wallOptions),
+			Matter.Bodies.rectangle(window.innerWidth / 2, -100, window.innerWidth, 200, wallOptions),
 			Matter.Bodies.rectangle(
 				window.innerWidth / 2,
-				window.innerHeight,
+				window.innerHeight + 100,
 				window.innerWidth,
-				20,
+				200,
 				wallOptions
 			),
-			Matter.Bodies.rectangle(0, window.innerHeight / 2, 20, window.innerHeight, wallOptions),
+			Matter.Bodies.rectangle(-100, window.innerHeight / 2, 200, window.innerHeight, wallOptions),
 			Matter.Bodies.rectangle(
-				window.innerWidth,
+				window.innerWidth + 100,
 				window.innerHeight / 2,
-				20,
+				200,
 				window.innerHeight,
 				wallOptions
 			)
