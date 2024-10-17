@@ -23,8 +23,25 @@
 
 	let objectElement;
 
+	let viewportHeight = '100vh'; // Default to 100vh
+
+	// Function to update height based on the visible viewport
+	function updateViewportHeight() {
+		viewportHeight = `${window.visualViewport.height}px`;
+	}
+
 	onMount(() => {
 		initPhysics(objectElement);
+
+		// Initial setting of the height
+		updateViewportHeight();
+
+		// Update height on visual viewport changes
+		window.visualViewport.addEventListener('resize', updateViewportHeight);
+
+		return () => {
+			window.visualViewport.removeEventListener('resize', updateViewportHeight);
+		};
 
 		/*
 		window.addEventListener('keydown', (event) => {
@@ -142,15 +159,16 @@
 	}
 </script>
 
-<div class="relative">
+<!-- Use the dynamic height for your main container -->
+<div class="relative" style="height: {viewportHeight};">
 	<div bind:this={objectElement} class="absolute z-10 h-full w-full"></div>
 
-	<div class="flex h-screen w-screen flex-col items-center justify-center">
+	<div class="flex h-full w-full flex-col items-center justify-center">
 		<div class="mt-2 text-center font-zombie text-2xl text-orange-500">
 			<span class="text-lime-500">ZOM</span>BINGO
 		</div>
 
-		<div class="flex w-full flex-grow items-center justify-center p-2">
+		<div class="flex flex-grow items-center justify-center p-2">
 			<div class="grid h-full w-full grid-cols-5 gap-1">
 				{#each Array(5) as _, i}
 					{#each Array(5) as _, j}
