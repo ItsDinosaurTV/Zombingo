@@ -19,8 +19,7 @@
 	function handleButtonClick(i: number, j: number) {
 		state[i][j].selected = !state[i][j].selected;
 
-		if (!state[i][j].selected)
-			state[i][j].winning = false;
+		if (!state[i][j].selected) state[i][j].winning = false;
 
 		const { bingo, winningLines } = checkBingo();
 
@@ -35,7 +34,7 @@
 			// Change background color to red
 			//document.body.style.backgroundColor = 'red';
 
-			launchConfetti(['🎃','☠️','🍫','🍬','🍭']);
+			launchConfetti(['🎃', '☠️', '🍫', '🍬', '🍭']);
 		} else {
 			// Reset winning state if not bingo anymore (optional)
 			state.forEach((row) => row.forEach((cell) => (cell.winning = false)));
@@ -51,22 +50,34 @@
 		// Check rows, columns, and diagonals
 		for (let i = 0; i < size; i++) {
 			if (state[i].every((cell) => cell.selected)) {
-				winningLines.push({ type: "row", direction: "horizontal", cells: state[i] });
+				winningLines.push({ type: 'row', direction: 'horizontal', cells: state[i] });
 				bingo = true;
 			}
 			if (state.every((row) => row[i].selected)) {
-				winningLines.push({ type: "column", direction: "vertical", cells: state.map((row) => row[i]) });
+				winningLines.push({
+					type: 'column',
+					direction: 'vertical',
+					cells: state.map((row) => row[i])
+				});
 				bingo = true;
 			}
 		}
 
 		// Check diagonals
 		if (state.every((row, i) => row[i].selected)) {
-			winningLines.push({ type: "diagonal", direction: "top-left-to-bottom-right", cells: state.map((row, i) => row[i]) });
+			winningLines.push({
+				type: 'diagonal',
+				direction: 'top-left-to-bottom-right',
+				cells: state.map((row, i) => row[i])
+			});
 			bingo = true;
 		}
 		if (state.every((row, i) => row[size - 1 - i].selected)) {
-			winningLines.push({ type: "diagonal", direction: "top-right-to-bottom-left", cells: state.map((row, i) => row[size - 1 - i]) });
+			winningLines.push({
+				type: 'diagonal',
+				direction: 'top-right-to-bottom-left',
+				cells: state.map((row, i) => row[size - 1 - i])
+			});
 			bingo = true;
 		}
 
@@ -74,27 +85,22 @@
 	}
 </script>
 
-<div class="flex flex-col justify-center items-center h-screen w-screen">
+<div class="flex h-screen w-screen flex-col items-center justify-center">
+	<div class="text-center font-zombie text-2xl text-orange-500">ZOMBINGO</div>
 
-	<div class="text-center text-orange-500 text-2xl font-zombie">
-		ZOMBINGO
-	</div>
-
-	<div class="flex-grow w-full flex justify-center items-center p-2">
-		<div class="grid grid-cols-5 gap-1 w-full h-full">
-		{#each Array(5) as _, i}
-			{#each Array(5) as _, j}
-			<BingoCardButton
-				label={state[i][j].label}
-				onclick={() => handleButtonClick(i, j)}
-				selected={state[i][j].winning ? false : state[i][j].selected}
-				winning={state[i][j].winning}
-				font={i === 2 && j === 2 ? 'font-zombie text-orange-500 uppercase' : 'font-vhs text-xs'}
-			/>
+	<div class="flex w-full flex-grow items-center justify-center p-2">
+		<div class="grid h-full w-full grid-cols-5 gap-1">
+			{#each Array(5) as _, i}
+				{#each Array(5) as _, j}
+					<BingoCardButton
+						label={state[i][j].label}
+						onclick={() => handleButtonClick(i, j)}
+						selected={state[i][j].selected}
+						winning={state[i][j].winning}
+						font={i === 2 && j === 2 ? 'font-zombie uppercase' : 'font-vhs text-xs'}
+					/>
+				{/each}
 			{/each}
-		{/each}
 		</div>
 	</div>
-
 </div>
-  
