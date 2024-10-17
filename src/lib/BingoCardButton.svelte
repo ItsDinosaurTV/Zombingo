@@ -49,7 +49,7 @@
 	></div>
 
 	<!-- Label text -->
-	<div class="relative z-10 text-center {font}">
+	<div class="relative text-center {font}">
 		{label}
 	</div>
 </button>
