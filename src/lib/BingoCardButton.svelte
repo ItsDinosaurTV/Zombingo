@@ -2,9 +2,11 @@
 	const { label, onclick, selected, winning, winningDirections, center } = $props();
 
 	// Variables to store the click position
-	let clickX = $state(50); // Click X in percentage
-	let clickY = $state(50); // Click Y in percentage
-	let rippleSize = $state(0); // Will hold the size of the ripple
+	let clickX = $state(25 + Math.random() * 50); // Click X position in percentage
+	let clickY = $state(25 + Math.random() * 50); // Click Y position in percentage
+	let clientHeight = $state(0);
+	let clientWidth = $state(0);
+	let rippleSize = $derived(Math.max(clientWidth, clientHeight)); // The size of the ripple, based on the button size
 
 	function handleClick(event) {
 		const rect = event.currentTarget.getBoundingClientRect();
@@ -13,20 +15,14 @@
 		clickX = ((event.clientX - rect.left) / rect.width) * 100;
 		clickY = ((event.clientY - rect.top) / rect.height) * 100;
 
-		// Calculate the distance to the farthest corner
-		const dx = Math.max(event.clientX - rect.left, rect.right - event.clientX);
-		const dy = Math.max(event.clientY - rect.top, rect.bottom - event.clientY);
-		const maxDistance = Math.sqrt(dx * dx + dy * dy);
-
-		// Set the size of the ripple based on the distance to the farthest corner
-		rippleSize = maxDistance * 1;
-
 		// Trigger the onclick function passed from parent
 		onclick();
 	}
 </script>
 
 <button
+	bind:clientHeight
+	bind:clientWidth
 	class="relative h-full w-full overflow-hidden border border-slate-500 shadow-lg"
 	onclick={handleClick}
 >
