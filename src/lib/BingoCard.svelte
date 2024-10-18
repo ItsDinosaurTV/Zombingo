@@ -48,6 +48,8 @@
 
 		initPhysics(objectElement);
 
+		setWinningStates();
+
 		// Initial setting of the height
 		updateViewportHeight();
 
@@ -79,6 +81,10 @@
 		// Toggle the selected state of the clicked cell
 		gameState[i][j].selected = !gameState[i][j].selected;
 
+		setWinningStates();
+	}
+
+	function setWinningStates() {
 		// Get the current winning lines
 		const activeBingos = checkBingo();
 
