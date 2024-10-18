@@ -1,18 +1,18 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import BingoCardButton from './BingoCardButton.svelte';
-	import labels from './cards/demo';
+	import card from './cards/demo';
 	import { launchConfetti } from './ConfettiLauncher.svelte';
 	import { initPhysics, spawnTrophy, destroyTrophy } from './Rigidbody.svelte'; // Adjust the path as necessary
 	import { getStateFromSession, initializeState, saveStateToSession } from './utils/sessionState';
 	import type { GameState } from './types/gameState';
 
-	//const randomizedLabels = labels.toSorted(() => Math.random() - 0.5);
-	const randomizedLabels = labels.slice(1).sort(() => Math.random() - 0.5); // random labels excluding the 1st element
-	randomizedLabels.splice(12, 0, labels[0]); // add 1st element to middle
-
 	const size = 5;
-	let state = $state<GameState>(getStateFromSession(size, randomizedLabels));
+	let state = $state<GameState>(getStateFromSession() ?? initializeState(size, card)); // initialize state
+
+	function resetCard() {
+		state = initializeState(size, card);
+	}
 
 	// Watch for state changes to save to sessionStorage
 	$effect(() => saveStateToSession(state));
@@ -165,6 +165,9 @@
 	<div class="flex h-full w-full flex-col items-center justify-center">
 		<div class="mt-2 text-center font-zombie text-2xl text-orange-500">
 			<span class="text-lime-500">ZOM</span>BINGO
+			<button class="absolute right-0 top-0 p-2 font-black text-slate-300" onclick={resetCard}>
+				↻
+			</button>
 		</div>
 
 		<div class="flex flex-grow items-center justify-center p-2">

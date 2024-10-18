@@ -1,28 +1,34 @@
-export default [
-	'Free Space',
-	'Black cat crosses your path',
-	'Broken mirror',
-	'Walking under a ladder',
-	'Spilling salt',
-	'Stepping on a crack',
-	'Finding a four-leaf clover',
-	'Seeing an owl during the day',
-	'Creepy full moon',
-	'Number 13 on the calendar',
-	'Scary movie marathon',
-	'Chain email warning',
-	'Jason Voorhees reference',
-	'Spooky decoration sighting',
-	'Tripping over nothing',
-	'Weird coincidence',
-	'Phantom phone call',
-	'Stranger knocks on the door',
-	'Unlucky number sighting',
-	'Random power outage',
-	'Flashing lights',
-	'Urban legend discussion',
-	'Creepy doll',
-	'Sudden cold breeze',
-	'Finding a mysterious note',
-	'Someone mentions "Friday the 13th!"'
-];
+import type { Card } from '$lib/types/gameCard';
+
+const card: Card = {
+	freeSpaces: ['Free Space'],
+	labels: [
+		'Black cat crosses your path',
+		'Broken mirror',
+		'Walking under a ladder',
+		'Spilling salt',
+		'Stepping on a crack',
+		'Finding a four-leaf clover',
+		'Seeing an owl during the day',
+		'Creepy full moon',
+		'Number 13 on the calendar',
+		'Scary movie marathon',
+		'Chain email warning',
+		'Jason Voorhees reference',
+		'Spooky decoration sighting',
+		'Tripping over nothing',
+		'Weird coincidence',
+		'Phantom phone call',
+		'Stranger knocks on the door',
+		'Unlucky number sighting',
+		'Random power outage',
+		'Flashing lights',
+		'Urban legend discussion',
+		'Creepy doll',
+		'Sudden cold breeze',
+		'Finding a mysterious note',
+		'Someone mentions "Friday the 13th!"'
+	]
+} as const;
+
+export default card;
