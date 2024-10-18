@@ -4,16 +4,30 @@
 	import labels from './cards/demo';
 	import { launchConfetti } from './ConfettiLauncher.svelte';
 	import { initPhysics, spawnTrophy, destroyTrophy } from './Trophies.svelte';
+	import { clearSession, getStateFromSession, saveStateToSession } from './utils/sessionStorage';
+	import type { GameState } from './types/gameState';
 
 	const size = 5;
-	const state = Array.from({ length: size }, (_, i) =>
-		Array.from({ length: size }, (_, j) => ({
-			label: '',
-			selected: false,
-			winning: false,
-			winningDirections: []
-		}))
-	);
+	let gameState = $state<GameState>([]);
+
+	$effect(() => {
+		isMounted && saveStateToSession(gameState);
+	});
+
+	function initializeState() {
+		// Shuffle the labels (excluding the center label)
+		const shuffledLabels = labels.slice(1).sort(() => Math.random() - 0.5);
+		shuffledLabels.splice(12, 0, labels[0]); // Add the center label back to the middle
+
+		return Array.from({ length: size }, (_, i) =>
+			Array.from({ length: size }, (_, j) => ({
+				label: shuffledLabels[i * size + j],
+				selected: false,
+				winning: false,
+				winningDirections: []
+			}))
+		);
+	}
 
 	let winningBingos = []; // This will keep track of currently valid lines
 	let trophies = new Map(); // Stores trophies associated with each bingo line
@@ -27,16 +41,20 @@
 		viewportHeight = `${window.visualViewport.height}px`;
 	}
 
+	let isMounted = $state(false);
+
 	onMount(() => {
+		gameState = getStateFromSession() ?? initializeState();
+
 		initPhysics(objectElement);
 
 		// Initial setting of the height
 		updateViewportHeight();
 
-		resetCard();
-
 		// Update height on visual viewport changes
 		window.visualViewport.addEventListener('resize', updateViewportHeight);
+
+		isMounted = true;
 
 		return () => {
 			window.visualViewport.removeEventListener('resize', updateViewportHeight);
@@ -44,19 +62,9 @@
 	});
 
 	function resetCard() {
-		// Shuffle the labels again (excluding the center label)
-		const shuffledLabels = labels.slice(1).sort(() => Math.random() - 0.5);
-		shuffledLabels.splice(12, 0, labels[0]); // Add the center label back to the middle
+		clearSession();
 
-		// Reset each cell's state
-		for (let i = 0; i < size; i++) {
-			for (let j = 0; j < size; j++) {
-				state[i][j].label = shuffledLabels[i * size + j];
-				state[i][j].selected = false;
-				state[i][j].winning = false;
-				state[i][j].winningDirections = [];
-			}
-		}
+		gameState = initializeState();
 
 		// Clear any active trophies and winning lines
 		for (const trophy of trophies.values()) {
@@ -69,7 +77,7 @@
 
 	function handleButtonClick(i: number, j: number) {
 		// Toggle the selected state of the clicked cell
-		state[i][j].selected = !state[i][j].selected;
+		gameState[i][j].selected = !gameState[i][j].selected;
 
 		// Get the current winning lines
 		const activeBingos = checkBingo();
@@ -148,33 +156,33 @@
 
 		// Check rows and columns
 		for (let i = 0; i < size; i++) {
-			if (state[i].every((cell) => cell.selected)) {
-				winningLines.push({ type: 'row', direction: 'horizontal', cells: state[i] });
+			if (gameState[i].every((cell) => cell.selected)) {
+				winningLines.push({ type: 'row', direction: 'horizontal', cells: gameState[i] });
 			}
-			if (state.every((row) => row[i].selected)) {
+			if (gameState.every((row) => row[i].selected)) {
 				winningLines.push({
 					type: 'column',
 					direction: 'vertical',
-					cells: state.map((row) => row[i])
+					cells: gameState.map((row) => row[i])
 				});
 			}
 		}
 
 		// Check diagonals
-		if (state.every((row, i) => row[i].selected)) {
+		if (gameState.every((row, i) => row[i].selected)) {
 			winningLines.push({
 				type: 'diagonal',
 				direction: 'top-left-to-bottom-right',
-				cells: state.map((row, i) => row[i])
+				cells: gameState.map((row, i) => row[i])
 			});
 		}
 
 		// Return the winning lines
-		if (state.every((row, i) => row[size - 1 - i].selected)) {
+		if (gameState.every((row, i) => row[size - 1 - i].selected)) {
 			winningLines.push({
 				type: 'diagonal',
 				direction: 'top-right-to-bottom-left',
-				cells: state.map((row, i) => row[size - 1 - i])
+				cells: gameState.map((row, i) => row[size - 1 - i])
 			});
 		}
 
@@ -203,14 +211,14 @@
 
 		<div class="flex flex-grow items-center justify-center p-2">
 			<div class="grid h-full w-full grid-cols-5 gap-1">
-				{#each Array(5) as _, i}
-					{#each Array(5) as _, j}
+				{#each gameState as row, i}
+					{#each row as cell, j}
 						<BingoCardButton
-							label={state[i][j].label}
+							label={cell.label}
 							onclick={() => handleButtonClick(i, j)}
-							selected={state[i][j].selected}
-							winning={state[i][j].winning}
-							winningDirections={state[i][j].winningDirections}
+							selected={cell.selected}
+							winning={cell.winning}
+							winningDirections={cell.winningDirections}
 							center={i === 2 && j === 2}
 						/>
 					{/each}
