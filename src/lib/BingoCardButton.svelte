@@ -1,4 +1,6 @@
-<script>
+<script lang="ts">
+	import { onDestroy } from 'svelte';
+
 	const { label, onclick, selected, winning, winningDirections, center } = $props();
 
 	// Variables to store the click position
@@ -18,6 +20,29 @@
 		// Trigger the onclick function passed from parent
 		onclick();
 	}
+
+	let isFlashing = $state(false);
+	let flashTimeoutId = $state<ReturnType<typeof setTimeout>>();
+	export function triggerFlash() {
+		isFlashing = true;
+
+		clearTimeout(flashTimeoutId);
+
+		flashTimeoutId = setTimeout(() => {
+			isFlashing = false;
+		}, 400); // Keep in sync with the animation duration
+	}
+
+	$effect(() => {
+		if (!winning) {
+			isFlashing = false;
+			clearTimeout(flashTimeoutId);
+		}
+	});
+
+	onDestroy(() => {
+		clearTimeout(flashTimeoutId);
+	});
 </script>
 
 <button
@@ -106,4 +131,23 @@
 			{label}
 		</div>
 	</div>
+
+	{#if isFlashing}
+		<div class="animate-flash absolute inset-0 bg-white"></div>
+	{/if}
 </button>
+
+<style>
+	@keyframes fadeOut {
+		0% {
+			opacity: 1;
+		}
+		100% {
+			opacity: 0;
+		}
+	}
+
+	.animate-flash {
+		animation: fadeOut 0.4s ease-out forwards;
+	}
+</style>
