@@ -83,7 +83,7 @@
 		class:opacity-100={winningDirections.includes('top-right-to-bottom-left')}
 	></div>
 
-	<div class="relative z-20 text-center">
+	<div class="relative text-center">
 		<div
 			id="selected"
 			class={selected

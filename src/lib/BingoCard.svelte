@@ -5,13 +5,10 @@
 	import { launchConfetti } from './ConfettiLauncher.svelte';
 	import { initPhysics, spawnTrophy, destroyTrophy } from './Trophies.svelte';
 
-	const randomizedLabels = labels.slice(1).sort(() => Math.random() - 0.5); // random labels excluding the 1st element
-	randomizedLabels.splice(12, 0, labels[0]); // add 1st element to middle
-
 	const size = 5;
 	const state = Array.from({ length: size }, (_, i) =>
 		Array.from({ length: size }, (_, j) => ({
-			label: randomizedLabels[i * size + j],
+			label: '',
 			selected: false,
 			winning: false,
 			winningDirections: []
@@ -22,7 +19,6 @@
 	let trophies = new Map(); // Stores trophies associated with each bingo line
 
 	let objectElement;
-	let svgLines = []; // Array to store line coordinates
 
 	let viewportHeight = '100vh';
 
@@ -37,6 +33,8 @@
 		// Initial setting of the height
 		updateViewportHeight();
 
+		resetCard();
+
 		// Update height on visual viewport changes
 		window.visualViewport.addEventListener('resize', updateViewportHeight);
 
@@ -44,6 +42,30 @@
 			window.visualViewport.removeEventListener('resize', updateViewportHeight);
 		};
 	});
+
+	function resetCard() {
+		// Shuffle the labels again (excluding the center label)
+		const shuffledLabels = labels.slice(1).sort(() => Math.random() - 0.5);
+		shuffledLabels.splice(12, 0, labels[0]); // Add the center label back to the middle
+
+		// Reset each cell's state
+		for (let i = 0; i < size; i++) {
+			for (let j = 0; j < size; j++) {
+				state[i][j].label = shuffledLabels[i * size + j];
+				state[i][j].selected = false;
+				state[i][j].winning = false;
+				state[i][j].winningDirections = [];
+			}
+		}
+
+		// Clear any active trophies and winning lines
+		for (const trophy of trophies.values()) {
+			destroyTrophy(trophy);
+		}
+		trophies.clear();
+
+		winningBingos = [];
+	}
 
 	function handleButtonClick(i: number, j: number) {
 		// Toggle the selected state of the clicked cell
@@ -88,9 +110,6 @@
 
 			const trophy = spawnTrophy(); // Store the trophy reference
 			trophies.set(line.cells.map((cell) => cell.label).join(','), trophy); // Associate the trophy with the line
-
-			// Add line to SVG
-			addLine(line);
 		}
 
 		// Handle invalid lines: only remove winning status if they were previously valid
@@ -120,47 +139,7 @@
 				destroyTrophy(trophy);
 				trophies.delete(lineKey); // Remove the trophy reference from the map
 			}
-
-			// Remove line from SVG
-			removeLine(line);
 		}
-	}
-
-	// Function to calculate and add line positions to the svgLines array
-	function addLine(line) {
-		// Get the positions in the jagged array
-		const positions = line.cells.map((cell) => {
-			for (let i = 0; i < state.length; i++) {
-				const rowIndex = state[i].findIndex((c) => c === cell);
-				if (rowIndex !== -1) {
-					return { row: i, col: rowIndex };
-				}
-			}
-		});
-
-		if (positions.length > 0) {
-			const start = positions[0];
-			const end = positions[positions.length - 1];
-
-			const lineKey = line.cells.map((cell) => cell.label).join(',');
-
-			// Calculate the percentage positions within the grid
-			svgLines.push({
-				key: lineKey,
-				x1: (start.col + 0.5) * (100 / size),
-				y1: (start.row + 0.5) * (100 / size),
-				x2: (end.col + 0.5) * (100 / size),
-				y2: (end.row + 0.5) * (100 / size)
-			});
-
-			// trigger redraw
-			svgLines = svgLines;
-		}
-	}
-
-	function removeLine(line) {
-		const lineKey = line.cells.map((cell) => cell.label).join(',');
-		svgLines = svgLines.filter((l) => l.key !== lineKey);
 	}
 
 	// Function to check for valid bingo lines
@@ -209,11 +188,17 @@
 	class="relative bg-gradient-to-t from-slate-950 to-neutral-950"
 	style="height: {viewportHeight};"
 >
-	<div bind:this={objectElement} class="absolute z-30 h-full w-full"></div>
+	<div bind:this={objectElement} class="absolute z-10 h-full w-full"></div>
 
 	<div class="flex h-full w-full flex-col items-center justify-center">
 		<div class="mt-2 text-center font-zombie text-2xl text-orange-500">
 			<span class="text-lime-500">ZOM</span>BINGO
+			<button
+				class="absolute right-2 top-2 rounded bg-red-500 px-4 py-2 font-bold text-white hover:bg-red-700"
+				on:click={resetCard}
+			>
+				R
+			</button>
 		</div>
 
 		<div class="flex flex-grow items-center justify-center p-2">
@@ -231,22 +216,6 @@
 					{/each}
 				{/each}
 			</div>
-
-			<!-- SVG to draw lines -->
-			<!--
-			<svg class="pointer-events-none absolute inset-0 h-full w-full">
-				{#each svgLines as { x1, y1, x2, y2 }}
-					<line
-						x1={x1 + '%'}
-						y1={y1 + '%'}
-						x2={x2 + '%'}
-						y2={y2 + '%'}
-						stroke="black"
-						stroke-width="10"
-					/>
-				{/each}
-			</svg>
-			-->
 		</div>
 	</div>
 </div>
