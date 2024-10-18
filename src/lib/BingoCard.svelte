@@ -119,11 +119,14 @@
 				cell.winningDirections.push(line.direction);
 			}
 
-			// Launch confetti for every newly valid line
-			launchConfetti(['🎃', '☠️', '🍫', '🍬', '🍭']);
-
 			const trophy = spawnTrophy(); // Store the trophy reference
 			trophies.set(line.cells.map((cell) => cell.label).join(','), trophy); // Associate the trophy with the line
+		}
+
+		// only launch one set of particles
+		if (toAdd.length > 0) {
+			// Launch confetti for every newly valid line
+			launchConfetti(['🎃', '☠️', '🍫', '🍬', '🍭']);
 		}
 
 		// Handle invalid lines: only remove winning status if they were previously valid
@@ -202,7 +205,7 @@
 	class="relative bg-gradient-to-t from-slate-950 to-neutral-950"
 	style="height: {viewportHeight};"
 >
-	<div bind:this={objectElement} class="absolute z-10 h-full w-full"></div>
+	<div bind:this={objectElement} class="absolute z-10"></div>
 
 	<div class="flex h-full w-full flex-col items-center justify-center">
 		<div class="mt-2 text-center font-zombie text-2xl text-orange-500">

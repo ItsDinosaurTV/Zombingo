@@ -1,4 +1,4 @@
-<script context="module">
+<script context="module" lang="ts">
 	import Matter from 'matter-js';
 	import { launchConfettiAtPosition } from './ConfettiLauncher.svelte';
 
@@ -6,17 +6,51 @@
 		return Math.random() * (max - min) + min;
 	}
 
-	let engine;
-	let world;
-	let renderer;
-	let mouseConstraint;
+	let engine: Matter.Engine;
+	let world: Matter.World;
+	let renderer: Matter.Render;
+	let mouseConstraint: Matter.MouseConstraint;
+	let walls: Matter.Body[];
 
 	function resizeCanvas() {
-		Matter.Render.setPixelRatio(render, window.devicePixelRatio);
-		Matter.Render.lookAt(render, {
-			min: { x: 0, y: 0 },
-			max: { x: window.innerWidth, y: window.innerHeight }
-		});
+		// Update the renderer size
+		renderer.options.width = window.innerWidth;
+		renderer.options.height = window.innerHeight;
+		Matter.Render.setPixelRatio(renderer, window.devicePixelRatio);
+
+		// Reposition the walls to the edges of the new screen size
+		Matter.Body.setPosition(walls[0], { x: window.innerWidth / 2, y: -100 }); // Top wall
+		Matter.Body.setPosition(walls[1], { x: window.innerWidth / 2, y: window.innerHeight + 100 }); // Bottom wall
+		Matter.Body.setPosition(walls[2], { x: -100, y: window.innerHeight / 2 }); // Left wall
+		Matter.Body.setPosition(walls[3], { x: window.innerWidth + 100, y: window.innerHeight / 2 }); // Right wall
+
+		// Directly update the size of the walls
+		Matter.Body.setVertices(
+			walls[0],
+			Matter.Bodies.rectangle(window.innerWidth / 2, -100, window.innerWidth, 200).vertices
+		);
+		Matter.Body.setVertices(
+			walls[1],
+			Matter.Bodies.rectangle(
+				window.innerWidth / 2,
+				window.innerHeight + 100,
+				window.innerWidth,
+				200
+			).vertices
+		);
+		Matter.Body.setVertices(
+			walls[2],
+			Matter.Bodies.rectangle(-100, window.innerHeight / 2, 200, window.innerHeight).vertices
+		);
+		Matter.Body.setVertices(
+			walls[3],
+			Matter.Bodies.rectangle(
+				window.innerWidth + 100,
+				window.innerHeight / 2,
+				200,
+				window.innerHeight
+			).vertices
+		);
 	}
 
 	export function initPhysics(objectElement) {
@@ -46,7 +80,7 @@
 				visible: false
 			}
 		};
-		const walls = [
+		walls = [
 			Matter.Bodies.rectangle(window.innerWidth / 2, -100, window.innerWidth, 200, wallOptions),
 			Matter.Bodies.rectangle(
 				window.innerWidth / 2,
@@ -69,7 +103,7 @@
 		Matter.World.add(world, walls);
 
 		// Add mouse control
-		let mouse = Matter.Mouse.create(objectElement);
+		const mouse = Matter.Mouse.create(objectElement);
 		mouseConstraint = Matter.MouseConstraint.create(engine, {
 			mouse: mouse,
 			constraint: {
@@ -161,7 +195,7 @@
 			{ x: -imageWidth * 1, y: imageHeight * 2.5 } // Top left, narrower
 		]; // Create a new trapezoid using a polygon shape
 
-		let newTrapezoid = Matter.Bodies.fromVertices(x, y, trapezoidVertices, {
+		const newTrapezoid = Matter.Bodies.fromVertices(x, y, trapezoidVertices, {
 			render: {
 				sprite: {
 					texture: `/trophies/${chosenImage}.png`, // Use the chosen image name

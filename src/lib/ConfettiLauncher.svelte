@@ -2,7 +2,7 @@
 	import confetti from 'canvas-confetti';
 
 	export function launchConfettiAtPosition(x: Number, y: Number) {
-		var defaults = {
+		const defaults = {
 			spread: 360,
 			ticks: 60,
 			gravity: 0,
