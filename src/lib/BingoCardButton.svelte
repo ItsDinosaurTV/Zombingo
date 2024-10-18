@@ -53,8 +53,8 @@
 >
 	<div
 		class="duration-250 absolute rounded-full {center
-			? 'bg-radient-ellipse-c from-lime-950 from-60% to-lime-800 to-100%'
-			: 'bg-radient-ellipse-c from-orange-950 from-60% to-orange-800 to-100%'} transition-transform ease-out"
+			? 'from-lime-950 from-60% to-lime-800 to-100% bg-radient-ellipse-c'
+			: 'from-orange-950 from-60% to-orange-800 to-100% bg-radient-ellipse-c'} transition-transform ease-out"
 		style="
       width: {rippleSize}px;
       height: {rippleSize}px;
