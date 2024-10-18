@@ -15,7 +15,7 @@
 		function shoot() {
 			confetti({
 				...defaults,
-				particleCount: 40,
+				particleCount: 10,
 				decay: 0.95,
 				scalar: 0.75,
 				shapes: ['star']
@@ -23,7 +23,7 @@
 
 			confetti({
 				...defaults,
-				particleCount: 10,
+				particleCount: 15,
 				decay: 0.99,
 				scalar: 0.65,
 				shapes: ['circle']
@@ -40,7 +40,7 @@
 		const defaults = {
 			spread: 55,
 			ticks: 60,
-			gravity: 0,
+			gravity: 0.2,
 			startVelocity: 20,
 			shapes: shapes,
 			scalar: scalar
@@ -50,8 +50,8 @@
 			// left
 			confetti({
 				...defaults,
-				particleCount: 20,
-				decay: 0.92,
+				particleCount: 2,
+				decay: 0.96,
 				angle: 60,
 				origin: { x: 0, y: 1 }
 			});
@@ -76,8 +76,8 @@
 			// right
 			confetti({
 				...defaults,
-				particleCount: 20,
-				decay: 0.92,
+				particleCount: 2,
+				decay: 0.96,
 				angle: 120,
 				origin: { x: 1, y: 1 }
 			});
@@ -102,8 +102,8 @@
 			// top
 			confetti({
 				...defaults,
-				particleCount: 20,
-				decay: 0.92,
+				particleCount: 2,
+				decay: 0.96,
 				angle: 90,
 				origin: { y: -0.1 },
 				spread: 180,
@@ -121,7 +121,7 @@
 			});
 			confetti({
 				...defaults,
-				particleCount: 15,
+				particleCount: 5,
 				decay: 0.9,
 				scalar: scalar / 2,
 				shapes: ['circle'],
