@@ -8,53 +8,27 @@
 	let mouseConstraint: Matter.MouseConstraint;
 	let walls: Matter.Body[];
 
-	let initialOrientation = 0;
-
-	// utility
-	function randomInRange(min: number, max: number) {
-		return Math.random() * (max - min) + min;
-	}
-
-	function rotateAroundPoint(body: Matter.Body, point: { x: number; y: number }, angle: number) {
-		// Calculate the current position relative to the point
-		const relativePosition = {
-			x: body.position.x - point.x,
-			y: body.position.y - point.y
-		};
-
-		// Rotate the relative position
-		const rotatedPosition = {
-			x: relativePosition.x * Math.cos(angle) - relativePosition.y * Math.sin(angle),
-			y: relativePosition.x * Math.sin(angle) + relativePosition.y * Math.cos(angle)
-		};
-
-		// Calculate the new absolute position
-		const newPosition = {
-			x: rotatedPosition.x + point.x,
-			y: rotatedPosition.y + point.y
-		};
-
-		// Set the new position and rotation for the body
-		Matter.Body.setPosition(body, newPosition);
-		Matter.Body.setAngle(body, body.angle + angle);
-	}
+	let currentOrientation = 0;
 
 	function rotateCanvas() {
 		const screenCenter = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
 
 		// Use screen.orientation.angle to get the current orientation
-		const currentOrientation = window.screen.orientation.angle;
+		const newOrientation = window.screen.orientation.angle;
 
 		// Calculate the difference in orientation
-		const orientationDifference = initialOrientation - currentOrientation;
-		initialOrientation = currentOrientation; // Update the initial orientation
+		const orientationDifference = currentOrientation - newOrientation;
+		currentOrientation = newOrientation; // Update the initial orientation
 
 		const angleInRadians = (orientationDifference * Math.PI) / 180;
 
 		// Only rotate dynamic bodies
 		Matter.Composite.allBodies(world).forEach((body) => {
 			if (!body.isStatic) {
-				rotateAroundPoint(body, screenCenter, angleInRadians);
+				const newPosition = rotateAroundPoint(body.position, screenCenter, angleInRadians);
+
+				Matter.Body.setPosition(body, newPosition);
+				Matter.Body.setAngle(body, body.angle + angleInRadians);
 			}
 		});
 	}
@@ -104,7 +78,7 @@
 
 	export function initPhysics(objectElement: HTMLElement) {
 		// Initial orientation setting
-		initialOrientation = window.screen.orientation.angle;
+		currentOrientation = window.screen.orientation.angle;
 
 		// Create an engine
 		engine = Matter.Engine.create();
@@ -238,9 +212,9 @@
 
 		const x = randomInRange(0.25, 0.75) * window.innerWidth;
 		const y = 0.1 * window.innerHeight; // Start near the top of the screen
-		// Define trapezoid vertices
 
-		const trapezoidVertices = [
+		// Define trapezoid vertices
+		const trapezoidVertices: Matter.Vector[] = [
 			{ x: -imageWidth * 2.5, y: -imageHeight * 2.5 }, // Bottom left
 			{ x: imageWidth * 2.5, y: -imageHeight * 2.5 }, // Bottom right
 			{ x: imageWidth * 1, y: imageHeight * 2.5 }, // Top right, narrower
@@ -280,15 +254,17 @@
 	}
 
 	function handleDeviceMotion(event) {
-		// Get acceleration along x and y axis
-		const accelerationX = event.accelerationIncludingGravity.x;
-		const accelerationY = event.accelerationIncludingGravity.y;
+		// Convert the angle from degrees to radians
+		const angleInRadians = (currentOrientation * Math.PI) / 180;
+
+		// Rotate the acceleration vector based on the current orientation
+		const rotatedAcceleration = rotateVector(event.accelerationIncludingGravity, angleInRadians);
 
 		// Loop through all bodies in the world and apply force
 		Matter.Composite.allBodies(engine.world).forEach((body) => {
 			// Apply a force proportional to the acceleration
-			const forceX = accelerationX * -0.001; // Scale down the force for realism
-			const forceY = accelerationY * 0.001; // Scale down the force for realism
+			const forceX = rotatedAcceleration.x * -0.001; // Scale down the force for realism
+			const forceY = rotatedAcceleration.y * 0.001; // Scale down the force for realism
 
 			// Apply the force to the center of the body
 			Matter.Body.applyForce(body, body.position, { x: forceX, y: forceY });
@@ -304,5 +280,45 @@
 		// Use gamma to affect horizontal gravity and beta to affect vertical gravity
 		engine.world.gravity.x = gamma / 90; // Normalize to [-1, 1]
 		engine.world.gravity.y = beta / 180; // Normalize to [-1, 1]
+	}
+
+	// utility
+	function rotateVector(point: { x: number; y: number }, angleInRadians: number) {
+		if (angleInRadians === 0) return point;
+
+		// Rotate the vector
+		const rotatedX = point.x * Math.cos(angleInRadians) - point.y * Math.sin(angleInRadians);
+		const rotatedY = point.x * Math.sin(angleInRadians) + point.y * Math.cos(angleInRadians);
+
+		return { x: rotatedX, y: rotatedY };
+	}
+
+	function randomInRange(min: number, max: number) {
+		return Math.random() * (max - min) + min;
+	}
+
+	function rotateAroundPoint(
+		point: { x: number; y: number },
+		center: { x: number; y: number },
+		angleInRadians: number
+	) {
+		if (angleInRadians === 0) return point;
+
+		// Calculate the current position relative to the point
+		const relativePosition = {
+			x: point.x - center.x,
+			y: point.y - center.y
+		};
+
+		// Rotate the relative position
+		const rotatedPosition = rotateVector(relativePosition, angleInRadians);
+
+		// Calculate the new absolute position, flipped
+		const newPosition = {
+			x: rotatedPosition.x + center.y,
+			y: rotatedPosition.y + center.x
+		};
+
+		return newPosition;
 	}
 </script>
