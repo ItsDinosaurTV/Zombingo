@@ -116,6 +116,8 @@
 			for (const cell of line.cells) {
 				cell.winning = true; // Mark winning for valid cells
 
+				cell.element.triggerFlash();
+
 				cell.winningDirections.push(line.direction);
 			}
 
@@ -220,6 +222,7 @@
 				{#each gameState as row, i}
 					{#each row as cell, j}
 						<BingoCardButton
+							bind:this={cell.element}
 							label={cell.label}
 							onclick={() => handleButtonClick(i, j)}
 							selected={cell.selected}
