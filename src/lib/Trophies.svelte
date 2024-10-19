@@ -1,25 +1,111 @@
-<script context="module">
+<script context="module" lang="ts">
 	import Matter from 'matter-js';
 	import { launchConfettiAtPosition } from './ConfettiLauncher.svelte';
 
-	function randomInRange(min, max) {
+	let engine: Matter.Engine;
+	let world: Matter.World;
+	let renderer: Matter.Render;
+	let mouseConstraint: Matter.MouseConstraint;
+	let walls: Matter.Body[];
+
+	let initialOrientation = 0;
+
+	// utility
+	function randomInRange(min: number, max: number) {
 		return Math.random() * (max - min) + min;
 	}
 
-	let engine;
-	let world;
-	let renderer;
-	let mouseConstraint;
+	function rotateAroundPoint(body: Matter.Body, point: { x: number; y: number }, angle: number) {
+		// Calculate the current position relative to the point
+		const relativePosition = {
+			x: body.position.x - point.x,
+			y: body.position.y - point.y
+		};
 
-	function resizeCanvas() {
-		Matter.Render.setPixelRatio(render, window.devicePixelRatio);
-		Matter.Render.lookAt(render, {
-			min: { x: 0, y: 0 },
-			max: { x: window.innerWidth, y: window.innerHeight }
+		// Rotate the relative position
+		const rotatedPosition = {
+			x: relativePosition.x * Math.cos(angle) - relativePosition.y * Math.sin(angle),
+			y: relativePosition.x * Math.sin(angle) + relativePosition.y * Math.cos(angle)
+		};
+
+		// Calculate the new absolute position
+		const newPosition = {
+			x: rotatedPosition.x + point.x,
+			y: rotatedPosition.y + point.y
+		};
+
+		// Set the new position and rotation for the body
+		Matter.Body.setPosition(body, newPosition);
+		Matter.Body.setAngle(body, body.angle + angle);
+	}
+
+	function rotateCanvas() {
+		const screenCenter = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+
+		// Use screen.orientation.angle to get the current orientation
+		const currentOrientation = window.screen.orientation.angle;
+
+		// Calculate the difference in orientation
+		const orientationDifference = initialOrientation - currentOrientation;
+		initialOrientation = currentOrientation; // Update the initial orientation
+
+		const angleInRadians = (orientationDifference * Math.PI) / 180;
+
+		// Only rotate dynamic bodies
+		Matter.Composite.allBodies(world).forEach((body) => {
+			if (!body.isStatic) {
+				rotateAroundPoint(body, screenCenter, angleInRadians);
+			}
 		});
 	}
 
-	export function initPhysics(objectElement) {
+	function resizeCanvas() {
+		const width = window.outerWidth;
+		const height = window.outerHeight;
+		const thickness = 200;
+		const buffer = 90;
+
+		// Update Matter.js renderer's canvas size
+		renderer.options.width = width;
+		renderer.options.height = height;
+
+		// Update the canvas style to match the new dimensions
+		renderer.canvas.style.width = `${width}px`;
+		renderer.canvas.style.height = `${height}px`;
+
+		// Update renderer options to match the new screen dimensions
+		renderer.canvas.width = width * window.devicePixelRatio;
+		renderer.canvas.height = height * window.devicePixelRatio;
+
+		// Reposition the walls to the edges of the new screen size
+		Matter.Body.setPosition(walls[0], { x: width / 2, y: -buffer }); // Top wall
+		Matter.Body.setPosition(walls[1], { x: width / 2, y: height + buffer }); // Bottom wall
+		Matter.Body.setPosition(walls[2], { x: -buffer, y: height / 2 }); // Left wall
+		Matter.Body.setPosition(walls[3], { x: width + buffer, y: height / 2 }); // Right wall
+
+		// Directly update the size of the walls
+		Matter.Body.setVertices(
+			walls[0],
+			Matter.Bodies.rectangle(width / 2, 0, width, thickness).vertices
+		);
+		Matter.Body.setVertices(
+			walls[1],
+			Matter.Bodies.rectangle(width / 2, height, width, thickness).vertices
+		);
+		Matter.Body.setVertices(
+			walls[2],
+			Matter.Bodies.rectangle(0, height / 2, thickness, height).vertices
+		);
+		Matter.Body.setVertices(
+			walls[3],
+			Matter.Bodies.rectangle(width, height / 2, thickness, height).vertices
+		);
+	}
+
+	export function initPhysics(objectElement: HTMLElement) {
+		// Initial orientation setting
+		initialOrientation = window.screen.orientation.angle;
+
 		// Create an engine
 		engine = Matter.Engine.create();
 		world = engine.world;
@@ -31,12 +117,18 @@
 			options: {
 				width: window.innerWidth,
 				height: window.innerHeight,
+				pixelRatio: window.devicePixelRatio,
 				wireframes: false,
 				background: 'transparent'
 			}
 		});
 
 		// Create walls
+		const width = window.innerWidth;
+		const height = window.innerHeight;
+		const thickness = 200;
+		const buffer = 90;
+
 		const wallOptions = {
 			friction: 0.5,
 			frictionStatic: 0.7,
@@ -46,30 +138,18 @@
 				visible: false
 			}
 		};
-		const walls = [
-			Matter.Bodies.rectangle(window.innerWidth / 2, -100, window.innerWidth, 200, wallOptions),
-			Matter.Bodies.rectangle(
-				window.innerWidth / 2,
-				window.innerHeight + 100,
-				window.innerWidth,
-				200,
-				wallOptions
-			),
-			Matter.Bodies.rectangle(-100, window.innerHeight / 2, 200, window.innerHeight, wallOptions),
-			Matter.Bodies.rectangle(
-				window.innerWidth + 100,
-				window.innerHeight / 2,
-				200,
-				window.innerHeight,
-				wallOptions
-			)
+		walls = [
+			Matter.Bodies.rectangle(width / 2, -buffer, width, thickness, wallOptions),
+			Matter.Bodies.rectangle(width / 2, height + buffer, width, thickness, wallOptions),
+			Matter.Bodies.rectangle(-buffer, height / 2, thickness, height, wallOptions),
+			Matter.Bodies.rectangle(width + buffer, height / 2, thickness, height, wallOptions)
 		];
 
 		// Add walls to the world
 		Matter.World.add(world, walls);
 
 		// Add mouse control
-		let mouse = Matter.Mouse.create(objectElement);
+		const mouse = Matter.Mouse.create(objectElement);
 		mouseConstraint = Matter.MouseConstraint.create(engine, {
 			mouse: mouse,
 			constraint: {
@@ -87,7 +167,10 @@
 			// get bodies clicked on
 			const clickedBodies = Matter.Query.point(world.bodies, mousePosition);
 
-			if (clickedBodies.length === 0) {
+			// Filter out static objects from clickedBodies
+			const dynamicClickedBodies = clickedBodies.filter((body) => !body.isStatic);
+
+			if (dynamicClickedBodies.length === 0) {
 				// Temporarily disable pointer events on objectElement to "see through" it
 				objectElement.style.pointerEvents = 'none';
 
@@ -127,6 +210,7 @@
 
 		// Resize canvas and bodies on window resize
 		window.addEventListener('resize', resizeCanvas);
+		window.addEventListener('orientationchange', rotateCanvas);
 
 		// Add event listener for device motion (acceleration)
 		window.addEventListener('devicemotion', handleDeviceMotion);
@@ -136,6 +220,8 @@
 
 		return () => {
 			window.removeEventListener('resize', resizeCanvas);
+			window.removeEventListener('orientationchange', rotateCanvas);
+
 			window.removeEventListener('devicemotion', handleDeviceMotion);
 			//window.removeEventListener('deviceorientation', handleDeviceOrientation);
 		};
@@ -161,7 +247,7 @@
 			{ x: -imageWidth * 1, y: imageHeight * 2.5 } // Top left, narrower
 		]; // Create a new trapezoid using a polygon shape
 
-		let newTrapezoid = Matter.Bodies.fromVertices(x, y, trapezoidVertices, {
+		const newTrapezoid = Matter.Bodies.fromVertices(x, y, trapezoidVertices, {
 			render: {
 				sprite: {
 					texture: `/trophies/${chosenImage}.png`, // Use the chosen image name
@@ -185,10 +271,10 @@
 		return newTrapezoid;
 	}
 
-	export function destroyTrophy(rigidbody) {
-		const position = rigidbody.position;
+	export function destroyTrophy(rigidBody: Matter.Body) {
+		const position = rigidBody.position;
 
-		Matter.World.remove(world, rigidbody);
+		Matter.World.remove(world, rigidBody);
 
 		launchConfettiAtPosition(position.x / window.innerWidth, position.y / window.innerHeight);
 	}
