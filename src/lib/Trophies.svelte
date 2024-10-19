@@ -25,11 +25,19 @@
 		// Only rotate dynamic bodies
 		Matter.Composite.allBodies(world).forEach((body) => {
 			if (!body.isStatic) {
+				// Rotate position
 				const newPosition = rotateAroundPoint(body.position, screenCenter, angleInRadians);
-
 				Matter.Body.setPosition(body, newPosition);
+
+				// Rotate velocity
+				const rotatedVelocity = rotateVector(body.velocity, angleInRadians);
+				Matter.Body.setVelocity(body, rotatedVelocity);
+
+				// Rotate the angle
 				Matter.Body.setAngle(body, body.angle + angleInRadians);
-				Matter.Sleeping.set(body, false); // Wake up the body
+
+				// Wake up the body if it was asleep
+				Matter.Sleeping.set(body, false);
 			}
 		});
 	}
@@ -37,8 +45,8 @@
 	function resizeCanvas() {
 		const width = window.outerWidth;
 		const height = window.outerHeight;
-		const thickness = 200;
-		const buffer = 90;
+		const thickness = 1000;
+		const buffer = 490;
 
 		// Update Matter.js renderer's canvas size
 		renderer.options.width = width;
@@ -102,8 +110,8 @@
 		// Create walls
 		const width = window.innerWidth;
 		const height = window.innerHeight;
-		const thickness = 200;
-		const buffer = 90;
+		const thickness = 1000;
+		const buffer = 490;
 
 		const wallOptions = {
 			friction: 0.5,
