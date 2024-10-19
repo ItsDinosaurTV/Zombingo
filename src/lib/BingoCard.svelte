@@ -116,7 +116,8 @@
 			for (const cell of line.cells) {
 				cell.winning = true; // Mark winning for valid cells
 
-				cell.element.triggerFlash();
+				// cell element is null on init, but that's fine
+				if (cell.element != null) cell.element.triggerFlash();
 
 				cell.winningDirections.push(line.direction);
 			}
