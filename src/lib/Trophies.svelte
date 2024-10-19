@@ -29,6 +29,7 @@
 
 				Matter.Body.setPosition(body, newPosition);
 				Matter.Body.setAngle(body, body.angle + angleInRadians);
+				Matter.Sleeping.set(body, false); // Wake up the body
 			}
 		});
 	}
@@ -81,7 +82,7 @@
 		currentOrientation = window.screen.orientation.angle;
 
 		// Create an engine
-		engine = Matter.Engine.create();
+		engine = Matter.Engine.create({ enableSleeping: true });
 		world = engine.world;
 
 		// Create renderer
@@ -93,7 +94,8 @@
 				height: window.innerHeight,
 				pixelRatio: window.devicePixelRatio,
 				wireframes: false,
-				background: 'transparent'
+				background: 'transparent',
+				showSleeping: false
 			}
 		});
 
@@ -210,37 +212,41 @@
 		const randomIndex = Math.floor(Math.random() * trophyImages.length);
 		const chosenImage = trophyImages[randomIndex]; // Generate a random x position between 0 and the window width minus the trophy's width
 
-		const x = randomInRange(0.25, 0.75) * window.innerWidth;
-		const y = 0.1 * window.innerHeight; // Start near the top of the screen
+		// Create a new trapezoid using a polygon shape, why is it jagged who fuckin knows
+		const trapezoidVertices: Matter.Vector[][] = [
+			[
+				{ x: -imageWidth * 2.5, y: -imageHeight * 2.5 }, // Bottom left
+				{ x: imageWidth * 2.5, y: -imageHeight * 2.5 }, // Bottom right
+				{ x: imageWidth * 1, y: imageHeight * 2.5 }, // Top right, narrower
+				{ x: -imageWidth * 1, y: imageHeight * 2.5 } // Top left, narrower
+			]
+		];
 
-		// Define trapezoid vertices
-		const trapezoidVertices: Matter.Vector[] = [
-			{ x: -imageWidth * 2.5, y: -imageHeight * 2.5 }, // Bottom left
-			{ x: imageWidth * 2.5, y: -imageHeight * 2.5 }, // Bottom right
-			{ x: imageWidth * 1, y: imageHeight * 2.5 }, // Top right, narrower
-			{ x: -imageWidth * 1, y: imageHeight * 2.5 } // Top left, narrower
-		]; // Create a new trapezoid using a polygon shape
+		const spawnPoint = {
+			x: randomInRange(0.4, 0.6) * window.innerWidth,
+			y: randomInRange(0.4, 0.6) * window.innerHeight
+		};
 
-		const newTrapezoid = Matter.Bodies.fromVertices(x, y, trapezoidVertices, {
+		// Add the trapezoid to the world
+		const newTrapezoid = Matter.Bodies.fromVertices(spawnPoint.x, spawnPoint.y, trapezoidVertices, {
 			render: {
 				sprite: {
 					texture: `/trophies/${chosenImage}.png`, // Use the chosen image name
 					xScale: 2,
-					yScale: 2,
-					textureFilter: 'nearest'
+					yScale: 2
 				}
 			},
 			angle: Math.random() * Math.PI * 2 // Random angle in radians
-		}); // Add the trapezoid to the world
+		});
 
 		Matter.World.add(world, newTrapezoid); // Set a random angular velocity
 
 		const angularVelocity = randomInRange(-0.1, 0.1);
 		Matter.Body.setAngularVelocity(newTrapezoid, angularVelocity); // Set a random initial downward velocity (adjust values for desired speed)
 
-		Matter.Body.setVelocity(newTrapezoid, { x: randomInRange(-10, 10), y: randomInRange(10, 15) });
+		Matter.Body.setVelocity(newTrapezoid, { x: randomInRange(-10, 10), y: randomInRange(-10, 10) });
 
-		launchConfettiAtPosition(x / window.innerWidth, y / window.innerHeight);
+		launchConfettiAtPosition(spawnPoint.x / window.innerWidth, spawnPoint.y / window.innerHeight);
 
 		return newTrapezoid;
 	}
@@ -250,10 +256,23 @@
 
 		Matter.World.remove(world, rigidBody);
 
+		// Only rotate dynamic bodies
+		Matter.Composite.allBodies(world).forEach((body) => {
+			if (!body.isStatic) {
+				Matter.Sleeping.set(body, false); // Wake up the body
+			}
+		});
+
 		launchConfettiAtPosition(position.x / window.innerWidth, position.y / window.innerHeight);
 	}
 
 	function handleDeviceMotion(event) {
+		if (
+			Math.abs(event.accelerationIncludingGravity.x) <= 1 ||
+			Math.abs(event.accelerationIncludingGravity.y) <= 1
+		) {
+			return;
+		}
 		// Convert the angle from degrees to radians
 		const angleInRadians = (currentOrientation * Math.PI) / 180;
 
