@@ -191,10 +191,10 @@
 		<div class="mt-2 text-center font-zombie text-2xl text-orange-500">
 			<span class="text-lime-500">ZOM</span>BINGO
 			<button
-				class="absolute right-2 top-2 rounded bg-red-500 px-4 py-2 font-bold text-white hover:bg-red-700"
+				class="border-bg-red-500 absolute right-2 top-2 aspect-square border border-red-500 px-2 font-vhs text-sm text-white"
 				onclick={resetCard}
 			>
-				R
+				Clr
 			</button>
 		</div>
 
