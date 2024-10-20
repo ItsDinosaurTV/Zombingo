@@ -50,12 +50,4 @@
 		align-items: center;
 		justify-content: center;
 	}
-
-	.show {
-		display: flex;
-	}
-
-	.hide {
-		display: none;
-	}
 </style>
