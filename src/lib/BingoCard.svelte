@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import BingoCardButton from './BingoCardButton.svelte';
+	import ConfirmModal from './ConfirmModal.svelte'; // Import the modal
 	import labels from './cards/demo';
 	import { launchConfetti } from './ConfettiLauncher.svelte';
 	import { initPhysics, spawnTrophy, destroyTrophy } from './Trophies.svelte';
@@ -9,6 +10,7 @@
 
 	const size = 5;
 	let gameState = $state<GameState>([]);
+	let showModal = $state(false); // State to control modal visibility
 
 	$effect(() => {
 		isMounted && saveStateToSession(gameState);
@@ -192,7 +194,7 @@
 			<span class="text-lime-500">ZOM</span>BINGO
 			<button
 				class="border-bg-red-500 absolute right-2 top-2 aspect-square border border-red-500 px-2 font-vhs text-sm text-white"
-				onclick={resetCard}
+				onclick={() => (showModal = true)}
 			>
 				Clr
 			</button>
@@ -216,4 +218,13 @@
 			</div>
 		</div>
 	</div>
+
+	<ConfirmModal
+		isOpen={showModal}
+		onConfirm={() => {
+			resetCard();
+			showModal = false;
+		}}
+		onCancel={() => (showModal = false)}
+	/>
 </div>
