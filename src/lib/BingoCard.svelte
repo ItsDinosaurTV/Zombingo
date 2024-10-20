@@ -34,13 +34,6 @@
 
 	let objectElement;
 
-	let viewportHeight = '100vh';
-
-	// Function to update height based on the visible viewport
-	function updateViewportHeight() {
-		viewportHeight = `${window.visualViewport.height}px`;
-	}
-
 	let isMounted = $state(false);
 
 	onMount(() => {
@@ -50,17 +43,7 @@
 
 		setWinningStates();
 
-		// Initial setting of the height
-		updateViewportHeight();
-
-		// Update height on visual viewport changes
-		window.visualViewport.addEventListener('resize', updateViewportHeight);
-
 		isMounted = true;
-
-		return () => {
-			window.visualViewport.removeEventListener('resize', updateViewportHeight);
-		};
 	});
 
 	function resetCard() {
@@ -201,10 +184,7 @@
 </script>
 
 <!-- Use the dynamic height for main container -->
-<div
-	class="relative bg-gradient-to-t from-slate-950 to-neutral-950"
-	style="height: {viewportHeight};"
->
+<div class="relative bg-gradient-to-t from-slate-950 to-neutral-950" style="height: 100dvh;">
 	<div bind:this={objectElement} class="absolute z-10 h-full w-full"></div>
 
 	<div class="flex h-full w-full flex-col items-center justify-center">
