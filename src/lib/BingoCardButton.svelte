@@ -104,7 +104,7 @@
 		class:opacity-100={winningDirections.includes('top-right-to-bottom-left')}
 	></div>
 
-	<div class="relative text-center">
+	<div class="cell-label relative text-center">
 		<div
 			id="selected"
 			class={selected
@@ -124,20 +124,24 @@
 			id="notselected"
 			class={!selected
 				? center
-					? 'font-zombie uppercase text-orange-500'
+					? 'font-zombie uppercase text-lime-500'
 					: 'font-vhs text-slate-300'
 				: 'hidden'}
 		>
 			{label}
 		</div>
 	</div>
-
 	{#if isFlashing}
 		<div class="animate-flash absolute inset-0 bg-white"></div>
 	{/if}
 </button>
 
 <style>
+	@media (max-height: 400px) {
+		.cell-label {
+			font-size: 13px;
+		}
+	}
 	@keyframes fadeOut {
 		0% {
 			opacity: 1;

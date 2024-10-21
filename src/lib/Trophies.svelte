@@ -1,6 +1,6 @@
 <script context="module" lang="ts">
 	import Matter from 'matter-js';
-	import { launchConfettiAtPosition } from './ConfettiLauncher.svelte';
+	import { randomInRange, rotateAroundPoint, rotateVector } from './utils/mathUtils';
 
 	let engine: Matter.Engine;
 	let world: Matter.World;
@@ -43,22 +43,25 @@
 	}
 
 	function resizeCanvas() {
-		const width = window.outerWidth;
-		const height = window.outerHeight;
-		const thickness = 1000;
-		const buffer = 490;
+		const outerWidth = window.outerWidth;
+		const outerHeight = window.outerHeight;
 
 		// Update Matter.js renderer's canvas size
-		renderer.options.width = width;
-		renderer.options.height = height;
+		renderer.options.width = outerWidth;
+		renderer.options.height = outerHeight;
 
 		// Update the canvas style to match the new dimensions
-		renderer.canvas.style.width = `${width}px`;
-		renderer.canvas.style.height = `${height}px`;
+		renderer.canvas.style.width = `${outerWidth}px`;
+		renderer.canvas.style.height = `${outerHeight}px`;
 
 		// Update renderer options to match the new screen dimensions
-		renderer.canvas.width = width * window.devicePixelRatio;
-		renderer.canvas.height = height * window.devicePixelRatio;
+		renderer.canvas.width = outerWidth * window.devicePixelRatio;
+		renderer.canvas.height = outerHeight * window.devicePixelRatio;
+
+		const width = window.innerWidth;
+		const height = window.innerHeight;
+		const thickness = 1000;
+		const buffer = 490;
 
 		// Reposition the walls to the edges of the new screen size
 		Matter.Body.setPosition(walls[0], { x: width / 2, y: -buffer }); // Top wall
@@ -211,7 +214,7 @@
 		};
 	}
 
-	export function spawnTrophy() {
+	export function spawnTrophy(point: { x: number; y: number }) {
 		const imageWidth = 20; // Set this to the width of your PNG
 		const imageHeight = 20; // Set this to the height of your PNG
 		// Randomly pick a trophy image from the list
@@ -230,13 +233,8 @@
 			]
 		];
 
-		const spawnPoint = {
-			x: randomInRange(0.4, 0.6) * window.innerWidth,
-			y: randomInRange(0.4, 0.6) * window.innerHeight
-		};
-
 		// Add the trapezoid to the world
-		const newTrapezoid = Matter.Bodies.fromVertices(spawnPoint.x, spawnPoint.y, trapezoidVertices, {
+		const newTrapezoid = Matter.Bodies.fromVertices(point.x, point.y, trapezoidVertices, {
 			render: {
 				sprite: {
 					texture: `/trophies/${chosenImage}.png`, // Use the chosen image name
@@ -252,16 +250,15 @@
 		const angularVelocity = randomInRange(-0.1, 0.1);
 		Matter.Body.setAngularVelocity(newTrapezoid, angularVelocity); // Set a random initial downward velocity (adjust values for desired speed)
 
-		Matter.Body.setVelocity(newTrapezoid, { x: randomInRange(-10, 10), y: randomInRange(-10, 10) });
-
-		launchConfettiAtPosition(spawnPoint.x / window.innerWidth, spawnPoint.y / window.innerHeight);
+		Matter.Body.setVelocity(newTrapezoid, {
+			x: randomInRange(-10, 10),
+			y: randomInRange(-0.02, -0.03) * window.innerHeight
+		});
 
 		return newTrapezoid;
 	}
 
 	export function destroyTrophy(rigidBody: Matter.Body) {
-		const position = rigidBody.position;
-
 		Matter.World.remove(world, rigidBody);
 
 		// Only rotate dynamic bodies
@@ -270,11 +267,11 @@
 				Matter.Sleeping.set(body, false); // Wake up the body
 			}
 		});
-
-		launchConfettiAtPosition(position.x / window.innerWidth, position.y / window.innerHeight);
 	}
 
-	function handleDeviceMotion(event) {
+	function handleDeviceMotion(event: DeviceMotionEvent) {
+		if (event.accelerationIncludingGravity == null) return;
+
 		if (
 			Math.abs(event.accelerationIncludingGravity.x) <= 1 ||
 			Math.abs(event.accelerationIncludingGravity.y) <= 1
@@ -289,12 +286,14 @@
 
 		// Loop through all bodies in the world and apply force
 		Matter.Composite.allBodies(engine.world).forEach((body) => {
-			// Apply a force proportional to the acceleration
-			const forceX = rotatedAcceleration.x * -0.001; // Scale down the force for realism
-			const forceY = rotatedAcceleration.y * 0.001; // Scale down the force for realism
+			if (!body.isStatic) {
+				// Apply a force proportional to the acceleration
+				const forceX = rotatedAcceleration.x * -0.001; // Scale down the force for realism
+				const forceY = rotatedAcceleration.y * 0.001; // Scale down the force for realism
 
-			// Apply the force to the center of the body
-			Matter.Body.applyForce(body, body.position, { x: forceX, y: forceY });
+				// Apply the force to the center of the body
+				Matter.Body.applyForce(body, body.position, { x: forceX, y: forceY });
+			}
 		});
 	}
 
@@ -307,45 +306,5 @@
 		// Use gamma to affect horizontal gravity and beta to affect vertical gravity
 		engine.world.gravity.x = gamma / 90; // Normalize to [-1, 1]
 		engine.world.gravity.y = beta / 180; // Normalize to [-1, 1]
-	}
-
-	// utility
-	function rotateVector(point: { x: number; y: number }, angleInRadians: number) {
-		if (angleInRadians === 0) return point;
-
-		// Rotate the vector
-		const rotatedX = point.x * Math.cos(angleInRadians) - point.y * Math.sin(angleInRadians);
-		const rotatedY = point.x * Math.sin(angleInRadians) + point.y * Math.cos(angleInRadians);
-
-		return { x: rotatedX, y: rotatedY };
-	}
-
-	function randomInRange(min: number, max: number) {
-		return Math.random() * (max - min) + min;
-	}
-
-	function rotateAroundPoint(
-		point: { x: number; y: number },
-		center: { x: number; y: number },
-		angleInRadians: number
-	) {
-		if (angleInRadians === 0) return point;
-
-		// Calculate the current position relative to the point
-		const relativePosition = {
-			x: point.x - center.x,
-			y: point.y - center.y
-		};
-
-		// Rotate the relative position
-		const rotatedPosition = rotateVector(relativePosition, angleInRadians);
-
-		// Calculate the new absolute position, flipped
-		const newPosition = {
-			x: rotatedPosition.x + center.y,
-			y: rotatedPosition.y + center.x
-		};
-
-		return newPosition;
 	}
 </script>

@@ -3,10 +3,11 @@
 	import BingoCardButton from './BingoCardButton.svelte';
 	import ConfirmModal from './ConfirmModal.svelte'; // Import the modal
 	import labels from './cards/demo';
-	import { launchConfetti } from './ConfettiLauncher.svelte';
+	import { launchConfetti, launchConfettiAtPosition } from './ConfettiLauncher.svelte';
 	import { initPhysics, spawnTrophy, destroyTrophy } from './Trophies.svelte';
 	import { clearSession, getStateFromSession, saveStateToSession } from './utils/sessionStorage';
 	import type { GameState } from './types/gameState';
+	import { randomInRange } from './utils/mathUtils';
 
 	const size = 5;
 	let gameState = $state<GameState>([]);
@@ -34,16 +35,16 @@
 	let winningBingos = []; // This will keep track of currently valid lines
 	let trophies = new Map(); // Stores trophies associated with each bingo line
 
-	let objectElement;
+	let rigidbodiesElement;
 
 	let isMounted = $state(false);
 
 	onMount(() => {
 		gameState = getStateFromSession() ?? initializeState();
 
-		initPhysics(objectElement);
+		initPhysics(rigidbodiesElement);
 
-		setWinningStates();
+		setWinningStates(true);
 
 		isMounted = true;
 	});
@@ -69,7 +70,7 @@
 		setWinningStates();
 	}
 
-	function setWinningStates() {
+	function setWinningStates(init: boolean = false) {
 		// Get the current winning lines
 		const activeBingos = checkBingo();
 
@@ -107,11 +108,21 @@
 				cell.winningDirections.push(line.direction);
 			}
 
+			const spawnPoint = {
+				x: randomInRange(0.45, 0.55) * window.innerWidth,
+				y: randomInRange(0.8, 0.9) * window.innerHeight
+			};
+
+			const trophy = spawnTrophy(spawnPoint); // Store the trophy reference
+			trophies.set(line.cells.map((cell) => cell.label).join(','), trophy); // Associate the trophy with the line
+
+			//launchConfettiAtPosition(spawnPoint.x / window.innerWidth, spawnPoint.y / window.innerHeight);
+		}
+
+		// only launch confetti once
+		if (!init && toAdd.length > 0) {
 			// Launch confetti for every newly valid line
 			launchConfetti(['🎃', '☠️', '🍫', '🍬', '🍭']);
-
-			const trophy = spawnTrophy(); // Store the trophy reference
-			trophies.set(line.cells.map((cell) => cell.label).join(','), trophy); // Associate the trophy with the line
 		}
 
 		// Handle invalid lines: only remove winning status if they were previously valid
@@ -138,8 +149,15 @@
 			const trophy = trophies.get(lineKey);
 
 			if (trophy) {
+				const trophyPosition = trophy.position;
+
 				destroyTrophy(trophy);
 				trophies.delete(lineKey); // Remove the trophy reference from the map
+
+				launchConfettiAtPosition(
+					trophyPosition.x / window.innerWidth,
+					trophyPosition.y / window.innerHeight
+				);
 			}
 		}
 	}
@@ -186,22 +204,25 @@
 </script>
 
 <!-- Use the dynamic height for main container -->
-<div class="relative bg-gradient-to-t from-slate-950 to-neutral-950" style="height: 100dvh;">
-	<div bind:this={objectElement} class="absolute z-10 h-full w-full"></div>
+<div
+	class="relative select-none bg-gradient-to-t from-slate-950 to-neutral-950"
+	style="height: 100dvh;"
+>
+	<div bind:this={rigidbodiesElement} class="absolute z-10 h-full w-full"></div>
 
 	<div class="flex h-full w-full flex-col items-center justify-center">
 		<div class="mt-2 text-center font-zombie text-2xl text-orange-500">
 			<span class="text-lime-500">ZOM</span>BINGO
 			<button
-				class="border-bg-red-500 absolute right-2 top-2 aspect-square border border-red-500 px-2 font-vhs text-sm text-white"
+				class="border-bg-red-500 absolute right-2 top-2 aspect-square border border-red-500 px-2 font-vhs text-xs text-white"
 				onclick={() => (showModal = true)}
 			>
-				Clr
+				Rst
 			</button>
 		</div>
 
 		<div class="flex flex-grow items-center justify-center p-2">
-			<div class="grid h-full w-full grid-cols-5 gap-1">
+			<div class="grid h-full w-full auto-rows-fr grid-cols-5 gap-1">
 				{#each gameState as row, i}
 					{#each row as cell, j}
 						<BingoCardButton

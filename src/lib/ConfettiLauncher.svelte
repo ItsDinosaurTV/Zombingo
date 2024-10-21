@@ -34,6 +34,47 @@
 	}
 
 	export function launchConfetti(emojis: string[]) {
+		//const scalar = 2;
+		//const shapes = emojis.map((emoji) => confetti.shapeFromText({ text: emoji, scalar }));
+
+		var count = 200;
+		var defaults = {
+			origin: { y: 1 }
+		};
+
+		function fire(particleRatio, opts) {
+			confetti({
+				...defaults,
+				...opts,
+				particleCount: Math.floor(count * particleRatio)
+				//shapes: shapes
+			});
+		}
+
+		fire(0.25, {
+			spread: 26,
+			startVelocity: 55
+		});
+		fire(0.2, {
+			spread: 60
+		});
+		fire(0.35, {
+			spread: 100,
+			decay: 0.91,
+			scalar: 0.8
+		});
+		fire(0.1, {
+			spread: 120,
+			startVelocity: 25,
+			decay: 0.92,
+			scalar: 1.2
+		});
+		fire(0.1, {
+			spread: 120,
+			startVelocity: 45
+		});
+
+		/*
 		const scalar = 2;
 		const shapes = emojis.map((emoji) => confetti.shapeFromText({ text: emoji, scalar }));
 
@@ -47,6 +88,7 @@
 		};
 
 		function shoot() {
+			/*
 			// left
 			confetti({
 				...defaults,
@@ -98,15 +140,14 @@
 				angle: 120,
 				origin: { x: 1, y: 1 }
 			});
-
 			// top
 			confetti({
 				...defaults,
 				particleCount: 2,
 				decay: 0.96,
 				angle: 90,
-				origin: { y: -0.1 },
-				spread: 180,
+				origin: { x: 0.5, y: 0.5 },
+				spread: 360,
 				startVelocity: -35
 			});
 			confetti({
@@ -115,8 +156,8 @@
 				decay: 0.85,
 				flat: true,
 				angle: 90,
-				origin: { y: -0.1 },
-				spread: 180,
+				origin: { x: 0.5, y: 0.5 },
+				spread: 360,
 				startVelocity: -35
 			});
 			confetti({
@@ -126,8 +167,8 @@
 				scalar: scalar / 2,
 				shapes: ['circle'],
 				angle: 90,
-				origin: { y: -0.1 },
-				spread: 180,
+				origin: { x: 0.5, y: 0.5 },
+				spread: 360,
 				startVelocity: -35
 			});
 		}
@@ -135,5 +176,6 @@
 		setTimeout(shoot, 0);
 		setTimeout(shoot, 100);
 		setTimeout(shoot, 200);
+		*/
 	}
 </script>
