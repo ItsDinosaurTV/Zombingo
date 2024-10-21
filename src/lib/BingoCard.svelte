@@ -123,6 +123,9 @@
 		if (!init && toAdd.length > 0) {
 			// Launch confetti for every newly valid line
 			launchConfetti(['🎃', '☠️', '🍫', '🍬', '🍭']);
+
+			// Play sfx
+			new Audio('/sfx/horn.mp3').play();
 		}
 
 		// Handle invalid lines: only remove winning status if they were previously valid
