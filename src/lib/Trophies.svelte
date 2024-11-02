@@ -1,6 +1,8 @@
 <script context="module" lang="ts">
 	import Matter from 'matter-js';
 	import { randomInRange, rotateAroundPoint, rotateVector } from './utils/mathUtils';
+	import { beforeUpdate } from 'svelte';
+	import Page from '../routes/+page.svelte';
 
 	let engine: Matter.Engine;
 	let world: Matter.World;
@@ -10,27 +12,52 @@
 
 	let currentOrientation = 0;
 
-	function rotateCanvas() {
-		const screenCenter = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+	function clamp(value: number, min: number, max: number): number {
+		return Math.max(min, Math.min(value, max));
+	}
+
+	function rotateCanvas(event: ScreenOrientation) {
+		// Get the screen bounds
+		const screenSize = { x: window.innerWidth, y: window.innerHeight };
+		const screenCenter = { x: screenSize.x / 2, y: screenSize.y / 2 };
 
 		// Use screen.orientation.angle to get the current orientation
 		const newOrientation = window.screen.orientation.angle;
-
 		// Calculate the difference in orientation
-		const orientationDifference = currentOrientation - newOrientation;
+		let orientationDifference = (currentOrientation - newOrientation) % 360;
+		if (orientationDifference < 0) {
+			orientationDifference += 360;
+		}
 		currentOrientation = newOrientation; // Update the initial orientation
 
 		const angleInRadians = (orientationDifference * Math.PI) / 180;
 
+		const newSize = rotateVector(screenSize, angleInRadians);
+		newSize.x = Math.abs(newSize.x);
+		newSize.y = Math.abs(newSize.y);
+
 		// Only rotate dynamic bodies
 		Matter.Composite.allBodies(world).forEach((body) => {
 			if (!body.isStatic) {
+				const rotatedVelocity = rotateVector(body.velocity, angleInRadians);
+
 				// Rotate position
 				const newPosition = rotateAroundPoint(body.position, screenCenter, angleInRadians);
+
+				if (newPosition.x < 0 || newPosition.x > newSize.x) {
+					newPosition.x = newSize.x / 2;
+					rotatedVelocity.x = 0;
+				}
+
+				if (newPosition.y < 0 || newPosition.y > newSize.y) {
+					newPosition.y = newSize.y / 2;
+					rotatedVelocity.y = 0;
+				}
+
+				// set position
 				Matter.Body.setPosition(body, newPosition);
 
 				// Rotate velocity
-				const rotatedVelocity = rotateVector(body.velocity, angleInRadians);
 				Matter.Body.setVelocity(body, rotatedVelocity);
 
 				// Rotate the angle
@@ -42,7 +69,7 @@
 		});
 	}
 
-	function resizeCanvas() {
+	function resizeCanvas(event) {
 		const outerWidth = window.outerWidth;
 		const outerHeight = window.outerHeight;
 
@@ -58,33 +85,33 @@
 		renderer.canvas.width = outerWidth * window.devicePixelRatio;
 		renderer.canvas.height = outerHeight * window.devicePixelRatio;
 
-		const width = window.innerWidth;
-		const height = window.innerHeight;
+		const screenWidth = window.innerWidth;
+		const screenHeight = window.innerHeight;
 		const thickness = 1000;
 		const buffer = 490;
 
 		// Reposition the walls to the edges of the new screen size
-		Matter.Body.setPosition(walls[0], { x: width / 2, y: -buffer }); // Top wall
-		Matter.Body.setPosition(walls[1], { x: width / 2, y: height + buffer }); // Bottom wall
-		Matter.Body.setPosition(walls[2], { x: -buffer, y: height / 2 }); // Left wall
-		Matter.Body.setPosition(walls[3], { x: width + buffer, y: height / 2 }); // Right wall
+		Matter.Body.setPosition(walls[0], { x: screenWidth / 2, y: -buffer }); // Top wall
+		Matter.Body.setPosition(walls[1], { x: screenWidth / 2, y: screenHeight + buffer }); // Bottom wall
+		Matter.Body.setPosition(walls[2], { x: -buffer, y: screenHeight / 2 }); // Left wall
+		Matter.Body.setPosition(walls[3], { x: screenWidth + buffer, y: screenHeight / 2 }); // Right wall
 
 		// Directly update the size of the walls
 		Matter.Body.setVertices(
 			walls[0],
-			Matter.Bodies.rectangle(width / 2, 0, width, thickness).vertices
+			Matter.Bodies.rectangle(screenWidth / 2, 0, screenWidth, thickness).vertices
 		);
 		Matter.Body.setVertices(
 			walls[1],
-			Matter.Bodies.rectangle(width / 2, height, width, thickness).vertices
+			Matter.Bodies.rectangle(screenWidth / 2, screenHeight, screenWidth, thickness).vertices
 		);
 		Matter.Body.setVertices(
 			walls[2],
-			Matter.Bodies.rectangle(0, height / 2, thickness, height).vertices
+			Matter.Bodies.rectangle(0, screenHeight / 2, thickness, screenHeight).vertices
 		);
 		Matter.Body.setVertices(
 			walls[3],
-			Matter.Bodies.rectangle(width, height / 2, thickness, height).vertices
+			Matter.Bodies.rectangle(screenWidth, screenHeight / 2, thickness, screenHeight).vertices
 		);
 	}
 
@@ -215,8 +242,8 @@
 	}
 
 	export function spawnTrophy(point: { x: number; y: number }) {
-		const imageWidth = 20; // Set this to the width of your PNG
-		const imageHeight = 20; // Set this to the height of your PNG
+		const imageWidth = 30; // Set this to the width of your PNG
+		const imageHeight = 30; // Set this to the height of your PNG
 		// Randomly pick a trophy image from the list
 
 		const trophyImages = ['trophy1', 'trophy2', 'trophy3', 'trophy4', 'trophy5'];
@@ -226,10 +253,10 @@
 		// Create a new trapezoid using a polygon shape, why is it jagged who fuckin knows
 		const trapezoidVertices: Matter.Vector[][] = [
 			[
-				{ x: -imageWidth * 2.5, y: -imageHeight * 2.5 }, // Bottom left
-				{ x: imageWidth * 2.5, y: -imageHeight * 2.5 }, // Bottom right
-				{ x: imageWidth * 1, y: imageHeight * 2.5 }, // Top right, narrower
-				{ x: -imageWidth * 1, y: imageHeight * 2.5 } // Top left, narrower
+				{ x: -imageWidth * 1, y: -imageHeight * 1 }, // Bottom left
+				{ x: imageWidth * 1, y: -imageHeight * 1 }, // Bottom right
+				{ x: imageWidth * 0.25, y: imageHeight * 1 }, // Top right, narrower
+				{ x: -imageWidth * 0.25, y: imageHeight * 1 } // Top left, narrower
 			]
 		];
 
@@ -238,11 +265,12 @@
 			render: {
 				sprite: {
 					texture: `/trophies/${chosenImage}.png`, // Use the chosen image name
-					xScale: 2,
-					yScale: 2
+					xScale: 1,
+					yScale: 1
 				}
 			},
-			angle: Math.random() * Math.PI * 2 // Random angle in radians
+			angle: Math.random() * Math.PI * 2, // Random angle in radians
+			mass: 1
 		});
 
 		Matter.World.add(world, newTrapezoid); // Set a random angular velocity
@@ -278,6 +306,7 @@
 		) {
 			return;
 		}
+
 		// Convert the angle from degrees to radians
 		const angleInRadians = (currentOrientation * Math.PI) / 180;
 
@@ -288,8 +317,8 @@
 		Matter.Composite.allBodies(engine.world).forEach((body) => {
 			if (!body.isStatic) {
 				// Apply a force proportional to the acceleration
-				const forceX = rotatedAcceleration.x * -0.001; // Scale down the force for realism
-				const forceY = rotatedAcceleration.y * 0.001; // Scale down the force for realism
+				const forceX = rotatedAcceleration.x * -0.00025; // Scale down the force for realism
+				const forceY = rotatedAcceleration.y * 0.00025; // Scale down the force for realism
 
 				// Apply the force to the center of the body
 				Matter.Body.applyForce(body, body.position, { x: forceX, y: forceY });

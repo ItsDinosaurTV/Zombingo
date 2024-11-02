@@ -67,6 +67,12 @@
 		// Toggle the selected state of the clicked cell
 		gameState[i][j].selected = !gameState[i][j].selected;
 
+		if (gameState[i][j].selected) {
+			new Audio('/sfx/clickOff.mp3').play();
+		} else {
+			new Audio('/sfx/clickOn.mp3').play();
+		}
+
 		setWinningStates();
 	}
 
