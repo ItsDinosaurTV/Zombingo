@@ -321,7 +321,7 @@
 			</button>
 		</div>
 
-		<div class="flex flex-grow items-center justify-center p-2">
+		<div class="w-full p-2 grow">
 			<div class="grid h-full w-full auto-rows-fr grid-cols-5 gap-1">
 				{#each gameState.board as row, i}
 					{#each row as cell, j}
