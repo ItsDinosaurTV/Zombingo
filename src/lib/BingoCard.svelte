@@ -1,14 +1,14 @@
 <script lang="ts">
-    import { onMount } from 'svelte';
-    import BingoCardButton from './BingoCardButton.svelte';
-    import ConfirmModal from './ConfirmModal.svelte';
-    import demoLabels from './cards/demo';
-    import { launchConfetti, launchConfettiAtPosition } from './ConfettiLauncher.svelte';
-    import { initPhysics, spawnTrophy, destroyTrophy } from './Trophies.svelte';
-    import { clearSession, getStateFromSession, saveStateToSession } from './utils/sessionStorage';
-    import type { GameState } from './types/gameState';
-    import { randomInRange } from './utils/mathUtils';
-	import LZString from 'lz-string';
+	import { onMount } from 'svelte';
+	import BingoCardButton from './BingoCardButton.svelte';
+	import ConfirmModal from './ConfirmModal.svelte';
+	import demoLabels from './cards/demo';
+	import { launchConfetti, launchConfettiAtPosition } from './ConfettiLauncher.svelte';
+	import { initPhysics, spawnTrophy, destroyTrophy } from './Trophies.svelte';
+	import { clearSession, getStateFromSession, saveStateToSession } from './utils/sessionStorage';
+	import type { GameState } from './types/gameState';
+	import { randomInRange } from './utils/mathUtils';
+	import pako from 'pako';
 
 	let tiles: string[];
 
@@ -20,30 +20,50 @@
 		isMounted && saveStateToSession(gameState);
 	});
 
-    function decodeTiles(encoded: string) {
-        try {
-            // Use the matching decompression function
-            const tileString = LZString.decompressFromEncodedURIComponent(encoded);
-            
-            if (tileString === null) {
-                // This happens if decompression fails (e.g., bad data)
-                throw new Error('Decompression failed (returned null).');
-            }
+	/**
+	 * Decodes the URL-safe Base64 string back into a Pako/zlib Uint8Array buffer.
+	 */
+	function urlSafeBase64ToBuffer(str) {
+		// 1. Reverse the URL-safe replacements
+		let base64 = str.replace(/-/g, '+').replace(/_/g, '/');
+		// 2. Add padding back (required for standard btoa/atob)
+		while (base64.length % 4) {
+			base64 += '=';
+		}
+		// 3. Decode from Base64 to a binary string
+		const binary = atob(base64);
+		// 4. Convert binary string back to Uint8Array
+		const buffer = new Uint8Array(binary.length);
+		for (let i = 0; i < binary.length; i++) {
+			buffer[i] = binary.charCodeAt(i);
+		}
+		return buffer;
+	}
 
-            // Split the decompressed string back into an array
-            return tileString.split('\n');
-        } catch (e) {
-            console.error('Failed to decode/decompress tiles:', e);
-            return '';
-        }
-    }
+	function decodeTiles(encoded: string) {
+		// 2. Decompress
+		try {
+			// 1. Convert the URL-safe Base64 string back to a Uint8Array buffer
+			const compressedBuffer = urlSafeBase64ToBuffer(encoded);
 
-	function initializeState( sourceTiles: string[], sourceId: string | '' ): GameState {
+			// 2. Decompress the buffer back to a string
+			const decompressedString = pako.inflate(compressedBuffer, { to: 'string' });
+
+			// The decompressed string is your original tile list, ready to be split and displayed!
+			return decompressedString.split('\n');
+		} catch (e) {
+			console.error('Decompression failed:', e);
+
+			return ''; // Return empty array on failure
+		}
+	}
+
+	function initializeState(sourceTiles: string[], sourceId: string | ''): GameState {
 		let sourceLabels: string[];
 
 		// 1. Determine the source of tiles
 		// Check if custom tiles were passed and if they meet the 5x5 requirement (25 tiles)
-		if (sourceTiles  && sourceTiles.length >= size * size) {
+		if (sourceTiles && sourceTiles.length >= size * size) {
 			// Use custom tiles from the URL
 			sourceLabels = sourceTiles;
 		} else {
@@ -59,27 +79,24 @@
 		const shuffledOthers = otherTiles.sort(() => Math.random() - 0.5);
 
 		// 3. Recombine: Insert the center tile back at index 12 (the 3rd row, 3rd column)
-		shuffledOthers.splice(12, 0, centerTileLabel); 
-		
+		shuffledOthers.splice(12, 0, centerTileLabel);
+
 		// The final list of 25 tiles, shuffled but with the fixed center
 		const finalTiles = shuffledOthers;
-		
+
 		// 4. Create the GameState 5x5 grid
-        const newBoard = Array.from({ length: size }, (_, i) =>
-            Array.from({ length: size }, (_, j) => ({
-                label: finalTiles[i * size + j] ?? '',
-                selected: false,
-                winning: false,
-                winningDirections: [],
+		const newBoard = Array.from({ length: size }, (_, i) =>
+			Array.from({ length: size }, (_, j) => ({
+				label: finalTiles[i * size + j] ?? '',
+				selected: false,
+				winning: false,
+				winningDirections: [],
 				element: null
-            }))
-        );
+			}))
+		);
 
 		// 5. Return the full GameState object (as defined by your type)
-        return { 
-            tileId: sourceId,
-            board: newBoard 
-        };
+		return { tileId: sourceId, board: newBoard };
 	}
 
 	let winningBingos: any[] = []; // This will keep track of currently valid lines
@@ -100,45 +117,44 @@
 		isMounted = true;
 	});
 	*/
-    onMount(() => {
-        initPhysics(rigidbodiesElement);
-        
-        const params = new URLSearchParams(location.search);
-        let urlEncoded: string | null = params.get('data');
+	onMount(() => {
+		initPhysics(rigidbodiesElement);
 
-        if (urlEncoded) {
-            // Decode the tiles from the URL only once
-            tiles = decodeTiles(urlEncoded);
+		const params = new URLSearchParams(location.search);
+		let urlEncoded: string | null = params.get('data');
 
-            // 1. Load saved state (this fills gameState.tileId with old ID or null)
-            const savedState = getStateFromSession();
-            gameState = savedState ?? initializeState(tiles, urlEncoded); // Use URL data for initial load if no saved state
+		if (urlEncoded) {
+			// Decode the tiles from the URL only once
+			tiles = decodeTiles(urlEncoded);
 
-            // 2. Check for ID mismatch (New URL vs. Saved State ID)
-            if (gameState.tileId !== urlEncoded) {
+			// 1. Load saved state (this fills gameState.tileId with old ID or null)
+			const savedState = getStateFromSession();
+			gameState = savedState ?? initializeState(tiles, urlEncoded); // Use URL data for initial load if no saved state
 
-                // 3. NEW TILE ID FOUND: Update reactive state and force reset
-                gameState.tileId = urlEncoded; // 👈 🎯 THIS SAVES THE NEW TILE ID
-                
-                // If you are forcing a reset, you must also call initializeState to use the new tiles
-                // Note: resetCard calls initializeState(), so we handle it there.
-                resetCard(); 
+			// 2. Check for ID mismatch (New URL vs. Saved State ID)
+			if (gameState.tileId !== urlEncoded) {
+				// 3. NEW TILE ID FOUND: Update reactive state and force reset
+				gameState.tileId = urlEncoded; // 👈 🎯 THIS SAVES THE NEW TILE ID
 
-                console.log('New tile data detected from URL, resetting game state.');
-            } else {
-                // Same URL, resume existing game
-                console.log('Tile data from URL matches existing state, retaining game state.');
-            }
-        } else {
+				// If you are forcing a reset, you must also call initializeState to use the new tiles
+				// Note: resetCard calls initializeState(), so we handle it there.
+				resetCard();
+
+				console.log('New tile data detected from URL, resetting game state.');
+			} else {
+				// Same URL, resume existing game
+				console.log('Tile data from URL matches existing state, retaining game state.');
+			}
+		} else {
 			tiles = demoLabels;
-			
-            // No URL data, load saved or initialize default
-            gameState = getStateFromSession() ?? initializeState(demoLabels, null);
-        }
 
-        setWinningStates(true);
-        isMounted = true;
-    });
+			// No URL data, load saved or initialize default
+			gameState = getStateFromSession() ?? initializeState(demoLabels, null);
+		}
+
+		setWinningStates(true);
+		isMounted = true;
+	});
 
 	function resetCard() {
 		clearSession();
@@ -321,7 +337,7 @@
 			</button>
 		</div>
 
-		<div class="w-full p-2 grow">
+		<div class="w-full grow p-2">
 			<div class="grid h-full w-full auto-rows-fr grid-cols-5 gap-1">
 				{#each gameState.board as row, i}
 					{#each row as cell, j}
