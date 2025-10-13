@@ -54,7 +54,9 @@
 
 		// --- START Pako Compression ---
 		// 1. Compress the string to a Uint8Array buffer
-		const compressedBuffer = pako.deflate(tileString);
+        const compressedBuffer = pako.deflate(tileString, {
+            level: 9 // 🌟 MAXIMIZE COMPRESSION HERE 🌟
+        });
 		// 2. Convert the buffer to a URL-safe string
 		const encoded = bufferToUrlSafeBase64(compressedBuffer);
 		// --- END Pako Compression ---
@@ -108,7 +110,7 @@
 		id="tile-input"
 		class="textarea rounded border border-slate-600 bg-slate-800 p-2 text-slate-200"
 		style="max-width: 100%; margin-bottom: 5px;"
-		placeholder="Paste each tile on a new line (minimum 25)."
+		placeholder="Each Line is a Tile, First Line is the Center Tile."
 		on:input={updateLineCount}
 		rows="25"
 		cols="50"
