@@ -25,7 +25,7 @@
             return;
         }
         
-        const tileString = lines.join('$$');
+        const tileString = lines.join('\n');
         const encoded = LZString.compressToEncodedURIComponent(tileString);
         
         shareUrl = `${location.origin}/card?data=${encoded}`;

@@ -31,7 +31,7 @@
             }
 
             // Split the decompressed string back into an array
-            return tileString.split('$$');
+            return tileString.split('\n');
         } catch (e) {
             console.error('Failed to decode/decompress tiles:', e);
             return '';
