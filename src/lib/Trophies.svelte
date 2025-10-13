@@ -264,7 +264,7 @@
 		const newTrapezoid = Matter.Bodies.fromVertices(point.x, point.y, trapezoidVertices, {
 			render: {
 				sprite: {
-					texture: `/trophies/${chosenImage}.png`, // Use the chosen image name
+					texture: `trophies/${chosenImage}.png`, // Use the chosen image name
 					xScale: 1,
 					yScale: 1
 				}

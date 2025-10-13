@@ -175,9 +175,9 @@
 		gameState.board[i][j].selected = !gameState.board[i][j].selected;
 
 		if (gameState.board[i][j].selected) {
-			new Audio('/sfx/clickOff.mp3').play();
+			new Audio('sfx/clickOff.mp3').play();
 		} else {
-			new Audio('/sfx/clickOn.mp3').play();
+			new Audio('sfx/clickOn.mp3').play();
 		}
 
 		setWinningStates();
@@ -238,7 +238,7 @@
 			launchConfetti(['🎃', '☠️', '🍫', '🍬', '🍭']);
 
 			// Play sfx
-			new Audio('/sfx/horn.mp3').play();
+			new Audio('sfx/horn.mp3').play();
 		}
 
 		// Handle invalid lines: only remove winning status if they were previously valid
