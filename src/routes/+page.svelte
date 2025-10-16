@@ -214,7 +214,7 @@
 </script>
 
 <div class="mb-2 mt-2 text-center font-zombie text-2xl text-orange-500">
-	<span class="text-lime-500">ZOM</span>BINGO
+	<span class="text-lime-500 [letter-spacing:-0.25em]">Z</span><span class="[letter-spacing:-0.25em]">💀</span><span class="text-lime-500">M</span>BINGO
 </div>
 
 <div style="display: flex; flex-direction: column; align-items: center; width: 100%;">
