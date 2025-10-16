@@ -8,7 +8,10 @@
 	let qrCodeDataUrl = ''; // Added export for potential external use, initialized empty
 	let lineCount = 0;
 	const MIN_LINES = 25;
+	const MAX_RECOMMENDED_LINES = 50;
 	$: isReady = lineCount >= MIN_LINES; // Reactive declaration for button disabling
+	$: showHighVolumeWarning = lineCount > MAX_RECOMMENDED_LINES;
+
 	// Function to extract non-empty lines
 
 	/**
@@ -54,23 +57,58 @@
 
 		// --- START Pako Compression ---
 		// 1. Compress the string to a Uint8Array buffer
-        const compressedBuffer = pako.deflate(tileString, {
-            level: 9 // 🌟 MAXIMIZE COMPRESSION HERE 🌟
-        });
+		const compressedBuffer = pako.deflate(tileString, {
+			level: 9 // 🌟 MAXIMIZE COMPRESSION HERE 🌟
+		});
 		// 2. Convert the buffer to a URL-safe string
 		const encoded = bufferToUrlSafeBase64(compressedBuffer);
 		// --- END Pako Compression ---
 
 		shareUrl = location.origin + resolve(`/card?data=${encoded}`);
 
-		qrCodeDataUrl = await generateQrCode(shareUrl);
+		qrCodeDataUrl = await generateQrCodeWithOverlay(shareUrl, 'qroverlay/qrbrain.png');
+		//qrCodeDataUrl = await generateQrCode(shareUrl);
 	} // Function to copy the currently generated URL
 
-	function copyUrl() {
-		if (shareUrl) {
-			navigator.clipboard?.writeText(shareUrl).catch((err) => {
-				console.error('Failed to copy text: ', err); // Optionally update shareUrl to show a copy error message
-			});
+	async function copyUrl() {
+		if (!shareUrl) {
+			return; // Nothing to copy
+		}
+
+		try {
+			await navigator.clipboard.writeText(shareUrl);
+			console.log('Share URL copied to clipboard successfully!');
+		} catch (err) {
+			console.error('Failed to copy text: ', err);
+			// Optionally, provide user feedback here, e.g., an alert or a temporary message on the screen
+		}
+	}
+
+	async function copyQrCode() {
+		if (!qrCodeDataUrl) {
+			return; // Nothing to copy
+		}
+
+		try {
+			// 1. Fetch the Data URL content
+			const response = await fetch(qrCodeDataUrl);
+			// 2. Convert the content (Base64 PNG) to a Blob object
+			const blob = await response.blob();
+
+			// 3. Create a ClipboardItem for the image MIME type
+			const item = new ClipboardItem({ [blob.type]: blob });
+
+			// 4. Write the item to the clipboard
+			await navigator.clipboard.write([item]);
+
+			console.log('QR Code image copied to clipboard successfully!');
+			// Optionally, add some visual feedback here (like a brief success message)
+		} catch (err) {
+			console.error('Failed to copy QR Code image: ', err);
+			// Inform the user if the copy failed, maybe due to browser restrictions
+			alert(
+				'Failed to copy the QR code image. Please check your browser permissions or use the download option (if added).'
+			);
 		}
 	}
 
@@ -81,14 +119,15 @@
 
 			// Generates the QR code as a Base64-encoded PNG Data URL
 			const qrCodeDataUrl = await QRCode.toDataURL(textToEncode, {
-				errorCorrectionLevel: 'H', // Use 'H'igh for better resilience
+				errorCorrectionLevel: 'L', // Use 'H'igh for better resilience
 				type: 'image/png',
 				margin: 1, // Minimal margin for smaller size
 				color: {
 					// Adjust colors if needed, otherwise defaults are fine
-					dark: '#000000',
-					light: '#ffffff'
-				}
+					dark: '#330232',
+					light: '#ff7fb6'
+				},
+				scale: 1
 			});
 
 			// This is the string you would send back to the client
@@ -96,6 +135,80 @@
 		} catch (err) {
 			console.error(err);
 			return null; // Handle error appropriately
+		}
+	}
+
+	async function generateQrCodeWithOverlay(shareUrl, backgroundImageUrl) {
+		const SCALE_FACTOR = 4; // 🌟 4x larger output 🌟
+
+		try {
+			// --- Configuration for QR Code Placement ---
+			// These values are estimated based on your provided image.
+			// You might need to adjust them for perfect alignment.
+			const qrCodeTargetWidth = 67 * SCALE_FACTOR; // Estimated width of the pink square
+			const qrCodeTargetHeight = 67 * SCALE_FACTOR; // Estimated height of the pink square
+			const qrCodeXPos = 33 * SCALE_FACTOR; // Estimated X position for the top-left corner of the pink square
+			const qrCodeYPos = 11 * SCALE_FACTOR; // Estimated Y position for the top-left corner of the pink square
+			// ------------------------------------------
+
+			// 1. Generate the QR Code Data URL
+			const textToEncode = shareUrl;
+			const qrCodeDataUrl = await QRCode.toDataURL(textToEncode, {
+				errorCorrectionLevel: 'L', // Low error correction for bigger QR code modules
+				type: 'image/png',
+				margin: 0,
+				// We'll set the QR code's intrinsic resolution here to match our target,
+				// so it scales nicely when drawn onto the canvas.
+				width: qrCodeTargetWidth,
+				color: { dark: '#301b32', light: '#7d986b' },
+				scale: SCALE_FACTOR
+			});
+
+			// 2. Load the Background Image and QR Code into Image objects
+			const backgroundImage = new Image();
+			const qrCodeImage = new Image();
+
+			const loadImages = new Promise((resolve, reject) => {
+				let loadedCount = 0;
+				const checkDone = () => {
+					if (++loadedCount === 2) resolve();
+				};
+
+				backgroundImage.onload = checkDone;
+				backgroundImage.onerror = reject;
+				qrCodeImage.onload = checkDone;
+				qrCodeImage.onerror = reject;
+
+				backgroundImage.src = backgroundImageUrl;
+				qrCodeImage.src = qrCodeDataUrl;
+			});
+
+			await loadImages;
+
+			// 3. Create a Canvas and Draw the Images
+
+			// Use the background image's natural dimensions for the canvas
+			const canvas = document.createElement('canvas');
+			canvas.width = backgroundImage.naturalWidth * SCALE_FACTOR;
+			canvas.height = backgroundImage.naturalHeight * SCALE_FACTOR;
+			const ctx = canvas.getContext('2d');
+
+			// Disable smoothing for pixel art style
+			ctx.imageSmoothingEnabled = false;
+
+			// Draw the background image first
+			ctx.drawImage(backgroundImage, 0, 0, canvas.width, canvas.height);
+
+			// Draw the QR Code image on top with fixed dimensions and position
+			ctx.drawImage(qrCodeImage, qrCodeXPos, qrCodeYPos, qrCodeTargetWidth, qrCodeTargetHeight);
+
+			// 4. Get the Final Composite Image Data URL
+			const finalDataUrl = canvas.toDataURL('image/png');
+
+			return finalDataUrl;
+		} catch (err) {
+			console.error('Error creating composite QR code image with fixed overlay:', err);
+			return null;
 		}
 	}
 </script>
@@ -126,6 +239,13 @@
 		{:else}
 			<span class="text-green-500" style="margin-left: 10px;"> (Ready!) </span>
 		{/if}
+		{#if showHighVolumeWarning}
+			<div
+				class="mt-2 rounded-lg border border-yellow-500 bg-yellow-900 p-2 text-sm text-yellow-300"
+			>
+				⚠️ With {lineCount} items, the QR code is very dense and might be difficult to scan reliably.
+			</div>
+		{/if}
 	</div>
 	<div style="display: flex; gap: 10px; margin-bottom: 10px;">
 		<button
@@ -144,10 +264,18 @@
 		>
 			Copy Link 📄
 		</button>
+		<button
+			id="copy-qr-button"
+			class="rounded-full bg-indigo-500 px-4 py-2 text-sm font-semibold text-white disabled:bg-gray-500 disabled:text-gray-300"
+			on:click={copyQrCode}
+			disabled={!qrCodeDataUrl || !isReady}
+		>
+			Copy QR Code 🖼️
+		</button>
 	</div>
 	<div id="qr-code-container" style="margin-top: 15px;">
 		{#if qrCodeDataUrl}
-			<img src={qrCodeDataUrl} alt="ZOMBINGO Share QR Code" style="width: 200px; height: 200px;" />
+			<img src={qrCodeDataUrl} alt="ZOMBINGO Share QR Code" />
 		{/if}
 	</div>
 	<div id="result-container" style="margin-top: 20px; text-align: center; max-width: 500px;">
