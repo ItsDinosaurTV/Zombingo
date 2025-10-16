@@ -6,6 +6,10 @@
 	let textarea;
 	export let shareUrl = ''; // Added export for potential external use, initialized empty
 	let qrCodeDataUrl = ''; // Added export for potential external use, initialized empty
+
+	let copyUrlStatus = 'Copy Link 📄';
+	let copyQrStatus = 'Copy QR Code 🖼️';
+
 	let lineCount = 0;
 	const MIN_LINES = 25;
 	const MAX_RECOMMENDED_LINES = 50;
@@ -72,43 +76,57 @@
 
 	async function copyUrl() {
 		if (!shareUrl) {
-			return; // Nothing to copy
+			return;
 		}
 
 		try {
 			await navigator.clipboard.writeText(shareUrl);
 			console.log('Share URL copied to clipboard successfully!');
+
+			// 🌟 SUCCESS FEEDBACK 🌟
+			copyUrlStatus = 'Copied! ✅';
+			setTimeout(() => {
+				copyUrlStatus = 'Copy Link 📄';
+			}, 1000); // Reset after 1 second
 		} catch (err) {
 			console.error('Failed to copy text: ', err);
-			// Optionally, provide user feedback here, e.g., an alert or a temporary message on the screen
+			// On error, show a message but still reset it
+			copyUrlStatus = 'Error! ❌';
+			setTimeout(() => {
+				copyUrlStatus = 'Copy Link 📄';
+			}, 1500); // Wait a bit longer for the error message
 		}
 	}
 
 	async function copyQrCode() {
 		if (!qrCodeDataUrl) {
-			return; // Nothing to copy
+			return;
 		}
 
 		try {
-			// 1. Fetch the Data URL content
 			const response = await fetch(qrCodeDataUrl);
-			// 2. Convert the content (Base64 PNG) to a Blob object
 			const blob = await response.blob();
 
-			// 3. Create a ClipboardItem for the image MIME type
 			const item = new ClipboardItem({ [blob.type]: blob });
 
-			// 4. Write the item to the clipboard
 			await navigator.clipboard.write([item]);
 
 			console.log('QR Code image copied to clipboard successfully!');
-			// Optionally, add some visual feedback here (like a brief success message)
+
+			// 🌟 SUCCESS FEEDBACK 🌟
+			copyQrStatus = 'Copied! ✅';
+			setTimeout(() => {
+				copyQrStatus = 'Copy QR Code 🖼️';
+			}, 1000); // Reset after 1 second
 		} catch (err) {
 			console.error('Failed to copy QR Code image: ', err);
-			// Inform the user if the copy failed, maybe due to browser restrictions
-			alert(
-				'Failed to copy the QR code image. Please check your browser permissions or use the download option (if added).'
-			);
+			// On error, show a message but still reset it
+			copyQrStatus = 'Error! ❌';
+			setTimeout(() => {
+				copyQrStatus = 'Copy QR Code 🖼️';
+			}, 1500); // Wait a bit longer for the error message
+
+			// alert('Failed to copy the QR code image...'); // You might remove this alert now that there's visual feedback
 		}
 	}
 
@@ -214,7 +232,9 @@
 </script>
 
 <div class="mb-2 mt-2 text-center font-zombie text-2xl text-orange-500">
-	<span class="text-lime-500 [letter-spacing:-0.25em]">Z</span><span class="[letter-spacing:-0.25em]">💀</span><span class="text-lime-500">M</span>BINGO
+	<span class="text-lime-500 [letter-spacing:-0.25em]">Z</span><span
+		class="[letter-spacing:-0.25em]">💀</span
+	><span class="text-lime-500">M</span>BINGO
 </div>
 
 <div style="display: flex; flex-direction: column; align-items: center; width: 100%;">
@@ -262,7 +282,7 @@
 			on:click={copyUrl}
 			disabled={!shareUrl || !isReady}
 		>
-			Copy Link 📄
+			{copyUrlStatus}
 		</button>
 		<button
 			id="copy-qr-button"
@@ -270,7 +290,7 @@
 			on:click={copyQrCode}
 			disabled={!qrCodeDataUrl || !isReady}
 		>
-			Copy QR Code 🖼️
+			{copyQrStatus}
 		</button>
 	</div>
 	<div id="qr-code-container" style="margin-top: 15px;">
